@@ -17,7 +17,7 @@ public class ShadowDecimalRule
   public ShadowDecimalRule(IToken token)
   {
     this.successToken = token;
-    this.suffixes = new HashSet();
+    this.suffixes = new HashSet<String>();
     this.builder = new StringBuilder();
   }
   
@@ -30,34 +30,34 @@ public class ShadowDecimalRule
   {
     boolean foundDecimal = false;
     int length = 0;int eLength = 0;int c = scanner.read();
-    if (((c < 48) || (c > 57)) && (c != 46))
+    if (((c < '0') || (c > '9')) && (c != '.'))
     {
       scanner.unread();
       return Token.UNDEFINED;
     }
-    while (((c >= 48) && (c <= 57)) || ((!foundDecimal) && (c == 46)))
+    while (((c >= '0') && (c <= '9')) || ((!foundDecimal) && (c == '.')))
     {
-      if (c == 46) {
+      if (c == '.') {
         foundDecimal = true;
       } else {
         length++;
       }
       c = scanner.read();
     }
-    if ((!foundDecimal) && (c == 46))
+    if ((!foundDecimal) && (c == '.'))
     {
       c = scanner.read();
-      foundDecimal = (c >= 48) && (c <= 57);
+      foundDecimal = (c >= '0') && (c <= '9');
       if (!foundDecimal)
       {
         scanner.unread();
-        c = 46;
+        c = '.';
       }
     }
-    if ((eLength == 0) && ((c == 101) || (c == 69)))
+    if ((eLength == 0) && ((c == 'e') || (c == 'E')))
     {
       c = scanner.read();
-      if ((c == 43) || (c == 45))
+      if ((c == '+') || (c == '-'))
       {
         eLength = 2;
         c = scanner.read();
@@ -66,7 +66,7 @@ public class ShadowDecimalRule
       {
         eLength = 1;
       }
-      if ((c < 48) || (c > 57))
+      if ((c < '0') || (c > '9'))
       {
         for (int i = 0; i < eLength; i++) {
           scanner.unread();
@@ -79,13 +79,13 @@ public class ShadowDecimalRule
         {
           eLength++;
           c = scanner.read();
-        } while ((c >= 48) && (c <= 57));
+        } while ((c >= '0') && (c <= '9'));
       }
     }
     this.builder.setLength(0);
-    while (((c >= 48) && (c <= 57)) || 
-      ((c >= 97) && (c <= 122)) || (
-      (c >= 65) && (c <= 90)))
+    while (((c >= '0') && (c <= '9')) || 
+      ((c >= 'a') && (c <= 'z')) || (
+      (c >= 'A') && (c <= 'Z')))
     {
       this.builder.appendCodePoint(c);
       c = scanner.read();

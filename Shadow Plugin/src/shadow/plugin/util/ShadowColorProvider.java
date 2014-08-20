@@ -20,7 +20,7 @@ public class ShadowColorProvider
   
   public ShadowColorProvider()
   {
-    this.table = new HashMap();
+    this.table = new HashMap<RGB, Color>();
   }
   
   public Color getColor(RGB rgb)

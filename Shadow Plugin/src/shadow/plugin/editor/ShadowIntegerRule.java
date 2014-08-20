@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import org.eclipse.jface.text.rules.ICharacterScanner;
 import org.eclipse.jface.text.rules.IRule;
 import org.eclipse.jface.text.rules.IToken;
@@ -22,8 +23,8 @@ public class ShadowIntegerRule
   {
     this.successToken = token;
     this.defaultRadix = radix;
-    this.prefixes = new HashMap();
-    this.suffixes = new HashSet();
+    this.prefixes = new HashMap<Character, Integer>();
+    this.suffixes = new HashSet<String>();
     this.builder = new StringBuilder();
   }
   

@@ -2,10 +2,11 @@ package shadow.plugin.outline;
 
 import java.io.File;
 import java.io.FileInputStream;
-import org.eclipse.core.runtime.IPath;
+
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.IPathEditorInput;
+
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.compiler.ShadowCompilerInterface;
 
