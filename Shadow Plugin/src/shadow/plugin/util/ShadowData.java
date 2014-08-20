@@ -1,0 +1,92 @@
+package shadow.plugin.util;
+
+public abstract interface ShadowData
+{
+  public static final int[] PREFIXES = {
+    10, 
+    98, 2, 66, 2, 
+    99, 8, 67, 8, 
+    120, 16, 88, 16 };
+  public static final String[] INTEGRAL_SUFFIXES = {
+    "", 
+    "y", "uy", "Y", "UY", 
+    "s", "us", "S", "US", 
+    "i", "u", "ui", "I", "U", "UI", 
+    "l", "ul", "L", "UL" };
+  public static final String[] DECIMAL_SUFFIXES = {
+    "", 
+    "f", "F", 
+    "d", "D" };
+  public static final String[] LITERALS = {
+    "true", 
+    "false", 
+    "null" };
+  public static final String[] TYPES = {
+    "boolean", 
+    "byte", 
+    "code", 
+    "double", 
+    "float", 
+    "int", 
+    "long", 
+    "short", 
+    "ubyte", 
+    "uint", 
+    "ulong", 
+    "ushort", 
+    "var" };
+  public static final String[] KEYWORDS = {
+    "abstract", 
+    "and", 
+    "assert", 
+    "break", 
+    "case", 
+    "cast", 
+    "catch", 
+    "check", 
+    "class", 
+    "create", 
+    "constant", 
+    "continue", 
+    "default", 
+    "destroy", 
+    "do", 
+    "else", 
+    "enum", 
+    "error", 
+    "exception", 
+    "extends", 
+    "finally", 
+    "for", 
+    "foreach", 
+    "get", 
+    "if", 
+    "immutable", 
+    "implements", 
+    "import", 
+    "in", 
+    "instance", 
+    "is", 
+    "interface", 
+    "native", 
+    "nullable", 
+    "or", 
+    "private", 
+    "protected", 
+    "public", 
+    "recover", 
+    "return", 
+    "set", 
+    "singleton", 
+    "skip", 
+    "super", 
+    "switch", 
+    "this", 
+    "throw", 
+    "throws", 
+    "try", 
+    "view", 
+    "weak", 
+    "while", 
+    "xor" };
+}

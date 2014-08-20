@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<extension
+         point="org.eclipse.core.filebuffers.documentSetup">
+      <participant
+            class="shadow.plugin.editor.ShadowDocumentSetupParticipant"
+            extensions="shadow">
+      </participant>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="Shadow Editor"
+            extensions="shadow"
+            icon="icons/shadow.gif"
+            contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+            class="shadow.plugin.editor.ShadowEditor"
+            id="shadow.plugin.editor.ShadowEditor">
+      </editor>
+   </extension>
+</plugin>
