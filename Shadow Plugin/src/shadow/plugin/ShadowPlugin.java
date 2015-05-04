@@ -2,6 +2,7 @@ package shadow.plugin;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+
 import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.plugin.editor.ShadowCodeScanner;
 import shadow.plugin.editor.ShadowPartitionScanner;
