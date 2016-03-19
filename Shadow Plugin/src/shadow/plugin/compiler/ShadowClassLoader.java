@@ -17,6 +17,8 @@ public class ShadowClassLoader
 {
   private IProject project = null;
   
+  //This code should be updated to use shadow.jar, wherever it is
+  
   public ShadowClassLoader(ClassLoader parent)
   {
     super(parent);
