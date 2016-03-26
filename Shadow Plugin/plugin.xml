@@ -19,4 +19,12 @@
             id="shadow.plugin.editor.ShadowEditor">
       </editor>
    </extension>
+   <extension
+      point = "org.eclipse.ui.preferencePages">
+       <page
+            class="shadow.plugin.preferences.PreferencePage"
+            id="shadow.plugin.preferences.PreferencePage"
+            name="Shadow">
+      </page>
+   </extension>
 </plugin>

@@ -14,7 +14,7 @@ public class ShadowLabelProvider
       ((element instanceof ShadowOutlineError))) {
       return String.valueOf(element);
     }
-    return element.getClass().getSimpleName();
+    return element.toString();
   }
   
   public Image getImage(Object element)

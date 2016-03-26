@@ -9,16 +9,17 @@ import org.eclipse.ui.IPathEditorInput;
 
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.compiler.ShadowCompilerInterface;
+import shadow.plugin.compiler.ShadowCompilerInterface.Tree;
 
 public class ShadowContentProvider
   implements ITreeContentProvider
 {
-  private Object root;
+  private Tree root;
   private ShadowCompilerInterface compiler;
   
   public ShadowContentProvider()
   {
-    this.compiler = ShadowPlugin.getDefault().getCompilerInterface();
+    this.compiler = ShadowPlugin.getDefault().getCompilerInterface();    
   }
   
   public void inputChanged(Viewer viewer, Object oldInput, Object newInput)
@@ -29,30 +30,39 @@ public class ShadowContentProvider
       File file = ((IPathEditorInput)newInput).getPath().toFile();
       this.root = this.compiler.compile(new FileInputStream(file));
     }
-    catch (Exception localException) {}
-    if (this.root == null) {
-      this.root = new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn());
-    }
+    catch (Exception localException) {}   
   }
   
   public Object[] getElements(Object input)
   {
-    return new Object[] { this.root };
+	  if( root == null )	  
+		  return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn()) };
+	  else
+		  return root.getChildren();
   }
   
   public Object getParent(Object element)
   {
-    return this.compiler.getParent(element);
+	 if( element instanceof Tree )
+		 return ((Tree)element).getParent();
+	 
+	 return element;
   }
   
   public boolean hasChildren(Object element)
   {
-    return this.compiler.hasChildren(element);
+	  if( element instanceof Tree )
+		  return ((Tree)element).hasChildren();
+	  
+	  return false;
   }
   
   public Object[] getChildren(Object element)
   {
-    return this.compiler.getChildren(element);
+	if( element instanceof Tree )
+		return ((Tree)element).getChildren();
+	
+	return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn()) };
   }
   
   public void dispose() {}

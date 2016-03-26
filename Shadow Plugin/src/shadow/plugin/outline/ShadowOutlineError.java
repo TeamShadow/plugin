@@ -31,6 +31,6 @@ public class ShadowOutlineError
     if (hasError()) {
       return "Error [" + getLine() + ':' + getColumn() + ']';
     }
-    return "An outline is not available.";
+    return "Outline unavailable. Click to check path to shadow.jar.";
   }
 }

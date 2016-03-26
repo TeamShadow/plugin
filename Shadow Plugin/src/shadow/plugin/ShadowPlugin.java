@@ -68,4 +68,9 @@ public class ShadowPlugin
     }
     return this.compilerInterface;
   }
+  
+  public void resetCompilerInterface()
+  {
+	  compilerInterface = null;
+  }
 }

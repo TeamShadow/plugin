@@ -14,7 +14,7 @@ public class ShadowEditor
   
   protected void initializeEditor()
   {
-    super.initializeEditor();
+    super.initializeEditor();    
     setSourceViewerConfiguration(new ShadowSourceViewerConfiguration());
   }
   
