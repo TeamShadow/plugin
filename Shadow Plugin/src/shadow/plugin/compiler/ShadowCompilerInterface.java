@@ -18,6 +18,7 @@ public class ShadowCompilerInterface
 	private Class<?> nodeClass;
 	private int errorLine;
 	private int errorColumn;
+	private String message = null;
 
 	public ShadowCompilerInterface()
 	{
@@ -56,12 +57,17 @@ public class ShadowCompilerInterface
 	{
 		return this.errorColumn;
 	}
+	
+	public String getMessage()
+	{
+		return message;
+	}
 
 
 	public static class Tree
 	{  
 
-		enum Kind
+		public enum Kind
 		{
 			COMPILATION_UNIT,
 			CONSTANT,
@@ -222,6 +228,7 @@ public class ShadowCompilerInterface
 	public Tree compile(InputStream input)
 	{
 		this.errorLine = (this.errorColumn = 0);
+		this.message = null;
 		if (this.parserClass != null) {
 			try
 			{
@@ -233,9 +240,12 @@ public class ShadowCompilerInterface
 			catch (InvocationTargetException ex)
 			{
 				Scanner scanner = new Scanner(ex.getTargetException().getMessage());
-				scanner.useDelimiter("(Encountered \".*\" at line |, column |\\.)");
+				//Format of error:
+				//[15:9] Unexpected uint
+				scanner.useDelimiter("(\\[|:|\\])");				
 				this.errorLine = scanner.nextInt();
-				this.errorColumn = scanner.nextInt();
+				this.errorColumn = scanner.nextInt();				
+				this.message = scanner.next().trim();
 				scanner.close();
 			}
 			catch (Exception ex)
@@ -249,6 +259,7 @@ public class ShadowCompilerInterface
 	public Object compile(InputStream input, String encoding)
 	{
 		this.errorLine = (this.errorColumn = 0);
+		this.message = null;
 		if (this.parserClass != null) {
 			try
 			{
@@ -258,7 +269,18 @@ public class ShadowCompilerInterface
 				return this.parserClass.getMethod("CompilationUnit", new Class[0])
 						.invoke(parser, new Object[0]);
 			}
-			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
+			catch (InvocationTargetException ex) 
+			{	
+				Scanner scanner = new Scanner(ex.getTargetException().getMessage());
+				//Format of error:
+				//[15:9] Unexpected uint
+				scanner.useDelimiter("(\\[|:|\\])");
+				this.errorLine = scanner.nextInt();
+				this.errorColumn = scanner.nextInt();				
+				this.message = scanner.next().trim();
+				scanner.close();
+			}
+			catch (Exception ex)
 			{
 				ex.printStackTrace();
 			}

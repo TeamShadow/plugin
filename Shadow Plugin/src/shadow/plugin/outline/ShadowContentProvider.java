@@ -36,7 +36,7 @@ public class ShadowContentProvider
   public Object[] getElements(Object input)
   {
 	  if( root == null )	  
-		  return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn()) };
+		  return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn(), this.compiler.getMessage()) };
 	  else
 		  return root.getChildren();
   }
@@ -62,7 +62,7 @@ public class ShadowContentProvider
 	if( element instanceof Tree )
 		return ((Tree)element).getChildren();
 	
-	return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn()) };
+	return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn(), this.compiler.getMessage()) };
   }
   
   public void dispose() {}

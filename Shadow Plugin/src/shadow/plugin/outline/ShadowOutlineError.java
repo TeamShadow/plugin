@@ -4,11 +4,13 @@ public class ShadowOutlineError
 {
   private int line;
   private int column;
+  private String message;
   
-  public ShadowOutlineError(int errorLine, int errorColumn)
+  public ShadowOutlineError(int errorLine, int errorColumn, String message)
   {
     this.line = errorLine;
     this.column = errorColumn;
+    this.message = message;
   }
   
   public boolean hasError()
@@ -29,7 +31,7 @@ public class ShadowOutlineError
   public String toString()
   {
     if (hasError()) {
-      return "Error [" + getLine() + ':' + getColumn() + ']';
+      return "Parse error [" + getLine() + ':' + getColumn() + "]: " + message;
     }
     return "Outline unavailable. Click to check path to shadow.jar.";
   }
