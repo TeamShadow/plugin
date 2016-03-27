@@ -11,36 +11,30 @@ import java.util.Scanner;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import shadow.plugin.ShadowPlugin;
+import shadow.plugin.outline.ShadowLabel;
 
 public class ShadowCompilerInterface
 {
 	private Class<?> parserClass;
+	private Class<?> declarationClass;
 	private Class<?> nodeClass;
 	private int errorLine;
 	private int errorColumn;
-	private String message = null;
+	private String message = null;	
 
 	public ShadowCompilerInterface()
 	{
 		try
 		{
-			//ShadowClassLoader loader = new ShadowClassLoader(getClass().getClassLoader());
-			//String pathToJar = "E:\\Documents\\Shadow Stuff\\shadow 0.6\\shadow.jar";
-			
 			IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
 			        .getPreferenceStore();
-			//String pathToJar = "E:\\Documents\\Shadow Stuff\\shadow 0.6\\shadow.jar";
 			String pathToJar = preferenceStore.getString("PATH");
 			
 			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
 			URLClassLoader loader = URLClassLoader.newInstance(urls);
-			//String className = className.replace('/', '.');
-			//Class c = loader.loadClass(className);
-
-			//this.parserClass = Class.forName("shadow.parser.javacc.ShadowParser", false, loader);
 			this.parserClass = loader.loadClass("shadow.parser.javacc.ShadowParser");
-			//this.nodeClass = Class.forName("shadow.parser.javacc.Node", false, loader);
 			this.nodeClass = loader.loadClass("shadow.parser.javacc.Node");
+			this.declarationClass = loader.loadClass("shadow.parser.javacc.ASTClassOrInterfaceDeclaration");
 		}
 		catch (ClassNotFoundException | MalformedURLException e)
 		{
@@ -62,34 +56,42 @@ public class ShadowCompilerInterface
 	{
 		return message;
 	}
+	
+	
+	private String getKind(Object declaration)
+	{
+		try {
+			Object kind = declarationClass.getMethod("getKind", new Class[0]).invoke(declaration, new Object[0]);
+			return kind.toString().toLowerCase();
+		} catch (IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			return "";
+		}		
+	}
 
 
-	public static class Tree
+	public class Tree
 	{  
-
-		public enum Kind
-		{
-			COMPILATION_UNIT,
-			CONSTANT,
-			CLASS,			
-			INTERFACE,
-			ENUM,
-			EXCEPTION,
-			SINGLETON,
-			FIELD,
-			METHOD		  
-		}	  
-
 		private Object node;
 		private Tree[] children;
 		private Tree parent;
-		private Kind kind;
+		private ShadowLabel label;
+		private String name;
 
-		public Tree(Object node, Tree parent, Kind kind)
+		public Tree(Object node, Tree parent, ShadowLabel label)
 		{
 			this.node = node;
 			this.parent = parent;
-			this.kind = kind;
+			this.label = label;	
+			
+			try {
+				this.name = (String)nodeClass.getMethod("getImage", new Class[0]).invoke(node, new Object[0]);
+			} catch (IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException
+					| SecurityException e) {
+				this.name = "";
+			}			
 		}
 
 		public void setChildren(Tree[] children)
@@ -114,7 +116,7 @@ public class ShadowCompilerInterface
 		
 		public String toString()
 		{
-			return node.toString();			
+			return name;
 		}
 		
 		public Object getNode()
@@ -122,10 +124,31 @@ public class ShadowCompilerInterface
 			return node;
 		}
 		
-		public Kind getKind()
+		public ShadowLabel getLabel()
 		{
-			return kind;			
-		}		
+			return label;			
+		}
+		
+		public void setLabel(ShadowLabel label)
+		{
+			this.label = label;
+		}
+	}	
+	
+	private Object getParent(Object node)
+	{
+		if ((this.nodeClass != null) && (this.nodeClass.isInstance(node))) {
+			try
+			{
+				return this.nodeClass.getMethod("jjtGetParent", new Class[0]).invoke(node, new Object[0]);
+			}
+			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		
+		return node;
 	}
 
 	private Object[] getNodes(Object node)
@@ -149,18 +172,56 @@ public class ShadowCompilerInterface
 		
 		return new Object[0];
 	}
+	
+	private String getModifiers(Object node)
+	{
+		if ((this.nodeClass != null) && (this.nodeClass.isInstance(node))) {
+			try
+			{
+				Object modifiers = this.nodeClass.getMethod("getModifiers", new Class[0]).invoke(node, new Object[0]);
+				return modifiers.toString();
+			}
+			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		
+		return "";
+	}
+	
+	private void bodyDeclaration(Object declaration, Tree tree, ArrayList<Tree> children)
+	{
+		//element 0 is modifiers, element 1 is declarator
+		Object[] modifierAndDeclarator = getNodes(declaration);
+		Object declarator = modifierAndDeclarator[1];
+		
+		if( declarator.getClass().getSimpleName().equals("ASTFieldDeclaration"))
+		{
+			Object[] variables = getNodes(declarator);
+			for( int i = 1; i < variables.length; ++i )
+				children.add(buildTree(variables[i], tree));							
+		}
+		else if( declarator.getClass().getSimpleName().equals("ASTMethodDeclaration")  )							
+			children.add(buildTree(getNodes(declarator)[0], tree));
+		else
+			children.add(buildTree(declarator, tree));
+	}
 
 	private Tree buildTree(Object element, Tree parent)
 	{
 		Tree tree = null;
 		Class<? extends Object> elementClass = element.getClass();
 		ArrayList<Tree> children = new ArrayList<Tree>();
-		Object[] nodes = getNodes(element);		
+		Object[] nodes = getNodes(element);	
+		
+		String modifiers;
+		String kind;
 
 		switch( elementClass.getSimpleName() )
 		{
 		case "ASTCompilationUnit": 
-			tree = new Tree(element, parent, Tree.Kind.COMPILATION_UNIT);
+			tree = new Tree(element, parent, ShadowLabel.COMPILATION_UNIT);
 			for( Object node : nodes )
 			{
 				String name = node.getClass().getSimpleName();
@@ -169,8 +230,16 @@ public class ShadowCompilerInterface
 			}
 			break;
 		case "ASTClassOrInterfaceDeclaration":
-			//TODO: Find a reasonable way to distinguish between class, interface, singleton, and exception
-			tree = new Tree(element, parent, Tree.Kind.CLASS);
+			kind = getKind(element);
+			if( kind.contains("singleton"))
+				tree = new Tree(element, parent, ShadowLabel.SINGLETON);
+			else if( kind.contains("exception"))
+				tree = new Tree(element, parent, ShadowLabel.EXCEPTION);
+			else if( kind.contains("interface"))
+				tree = new Tree(element, parent, ShadowLabel.INTERFACE);
+			else
+				tree = new Tree(element, parent, ShadowLabel.CLASS);
+			
 			for( Object node : nodes )
 			{
 				String name = node.getClass().getSimpleName();
@@ -178,16 +247,12 @@ public class ShadowCompilerInterface
 				{
 					Object[] declarations = getNodes(node);
 					for( Object declaration : declarations )
-					{
-						//element 0 is modifiers, element 1 is declarator
-						Object[] modifierAndDeclarator = getNodes(declaration);
-						children.add(buildTree(modifierAndDeclarator[1], tree));
-					}					
+						bodyDeclaration(declaration, tree, children);		
 				}
 			}
 			break;
 		case "ASTEnumDeclaration":
-			tree = new Tree(element, parent, Tree.Kind.ENUM);
+			tree = new Tree(element, parent, ShadowLabel.ENUM);
 			for( Object node : nodes )
 			{
 				String name = node.getClass().getSimpleName();
@@ -199,25 +264,34 @@ public class ShadowCompilerInterface
 						if( declaration.getClass().getSimpleName().equals("ASTEnumConstant"))
 							children.add(buildTree(declaration, tree));
 						else //body declaration
-						{						
-							//element 0 is modifiers, element 1 is declarator
-							Object[] modifierAndDeclarator = getNodes(declaration);
-							children.add(buildTree(modifierAndDeclarator[1], tree));
-						}
+							bodyDeclaration(declaration, tree, children);
 					}					
 				}
 			}			
 			break;
 		case "ASTEnumConstant":
-			tree = new Tree(element, parent, Tree.Kind.CONSTANT);
+			tree = new Tree(element, parent, ShadowLabel.CONSTANT);
 			break;
-		case "ASTFieldDeclaration":
-			tree = new Tree(element, parent, Tree.Kind.FIELD);
+		case "ASTVariableDeclarator":
+			modifiers = getModifiers(getParent(element));
+			if( modifiers.contains("constant") )
+				tree = new Tree(element, parent, ShadowLabel.CONSTANT);
+			else
+				tree = new Tree(element, parent, ShadowLabel.FIELD);
 			break;
 		case "ASTCreateDeclaration":
-		case "ASTDestroyDeclaration": 		
-		case "ASTMethodDeclaration":
-			tree = new Tree(element, parent, Tree.Kind.METHOD);
+		case "ASTDestroyDeclaration":
+		case "ASTMethodDeclarator":			
+			if(elementClass.getSimpleName().equals("ASTMethodDeclarator"))			
+				modifiers = getModifiers(getParent(element));
+			else
+				modifiers = getModifiers(element);			
+			if( modifiers.contains("public"))
+				tree = new Tree(element, parent, ShadowLabel.PUBLIC_METHOD);
+			else if( modifiers.contains("protected"))
+				tree = new Tree(element, parent, ShadowLabel.PROTECTED_METHOD);
+			else
+				tree = new Tree(element, parent, ShadowLabel.PRIVATE_METHOD);
 			break;
 		}
 
