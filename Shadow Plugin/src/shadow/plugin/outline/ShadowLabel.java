@@ -8,7 +8,7 @@ public enum ShadowLabel
 	CLASS("class_obj.gif"),
 	CONSTANT("field_public_obj.gif"),
 	ENUM("enum_obj.gif"),
-	EXCEPTION("class_obj.gif"),
+	EXCEPTION("exception_obj.gif"),
 	ERROR("error_obj.gif"),
 	FIELD("field_private_obj.gif"),
 	INTERFACE("int_obj.gif"),
@@ -16,7 +16,7 @@ public enum ShadowLabel
 	PRIVATE_METHOD("methpri_obj.gif"),
 	PROTECTED_METHOD("methpro_obj.gif"),
 	PUBLIC_METHOD("methpub_obj.gif"),
-	SINGLETON("class_obj.gif");
+	SINGLETON("singleton_obj.gif");
 
 	public Path path;
 
