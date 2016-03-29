@@ -66,6 +66,7 @@ extends ContentOutlinePage
 				Object element = ((IStructuredSelection)selection).getFirstElement();
 				int column;
 				int line;
+				int length = 1;
 
 				if ((element instanceof ShadowOutlineError))
 				{
@@ -109,6 +110,7 @@ extends ContentOutlinePage
 					ShadowCompilerInterface compiler = ShadowPlugin.getDefault().getCompilerInterface();
 					line = compiler.getLine(element);
 					column = compiler.getColumn(element);
+					length = compiler.getLength(element);
 				}
 				IDocument doc = this.editor.getDocumentProvider().getDocument(this.editor.getEditorInput());
 				int offset = doc.getLineOffset(line - 1);
@@ -117,7 +119,7 @@ extends ContentOutlinePage
 						i += 7;
 					}
 				}
-				this.editor.selectAndReveal(offset, 1);
+				this.editor.selectAndReveal(offset, length);
 			}
 		}
 		catch (BadLocationException localBadLocationException) {}

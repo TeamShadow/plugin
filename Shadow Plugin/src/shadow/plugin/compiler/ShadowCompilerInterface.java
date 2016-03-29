@@ -78,12 +78,19 @@ public class ShadowCompilerInterface
 		private Tree parent;
 		private ShadowLabel label;
 		private String name;
-
+		private String extra;
+		
 		public Tree(Object node, Tree parent, ShadowLabel label)
+		{
+			this(node, parent, "", label);
+		}
+
+		public Tree(Object node, Tree parent, String extra, ShadowLabel label)
 		{
 			this.node = node;
 			this.parent = parent;
 			this.label = label;	
+			this.extra = extra;
 			
 			try {
 				this.name = (String)nodeClass.getMethod("getImage", new Class[0]).invoke(node, new Object[0]);
@@ -116,6 +123,17 @@ public class ShadowCompilerInterface
 		
 		public String toString()
 		{
+			if( extra != null && !extra.isEmpty() )
+			{
+				if( label == ShadowLabel.FIELD || label == ShadowLabel.CONSTANT ) 
+					return name + ": " + extra;
+			
+				else if( label == ShadowLabel.PRIVATE_METHOD ||
+						 label == ShadowLabel.PROTECTED_METHOD  || 
+						 label == ShadowLabel.PUBLIC_METHOD )
+					return name + extra;
+			}			
+			
 			return name;
 		}
 		
@@ -132,6 +150,11 @@ public class ShadowCompilerInterface
 		public void setLabel(ShadowLabel label)
 		{
 			this.label = label;
+		}
+		
+		public int getLength()
+		{
+			return name.length();
 		}
 	}	
 	
@@ -226,10 +249,24 @@ public class ShadowCompilerInterface
 			{
 				String name = node.getClass().getSimpleName();
 				if( name.equals("ASTClassOrInterfaceDeclaration") || name.equals("ASTEnumDeclaration") )
+				{	 
+					for( Object detail :  getNodes(node) )
+					{
+						if( detail.getClass().getSimpleName().equals("ASTUnqualifiedName") )
+						{
+							children.add(new Tree(detail, tree, ShadowLabel.PACKAGE));
+							break;
+						}						
+					}					
+					
 					children.add(buildTree(node, tree));
+				}
 			}
-			break;
+			break;		 
 		case "ASTClassOrInterfaceDeclaration":
+			
+				
+			
 			kind = getKind(element);
 			if( kind.contains("singleton"))
 				tree = new Tree(element, parent, ShadowLabel.SINGLETON);
@@ -368,32 +405,15 @@ public class ShadowCompilerInterface
 	}
 
 	public Object[] getChildren(Object element)
-	{	  
-		ArrayList<Object> displayedChildren = new ArrayList<Object>();  
-
-		if ((this.nodeClass != null) && (this.nodeClass.isInstance(element))) {
+	{	
+		if ((this.nodeClass != null) && (this.nodeClass.isInstance(element)))
+		{
 			try
-			{    	  
-				Class<? extends Object> elementClass = element.getClass();
+			{   
 				int numChildren = ((Integer)this.nodeClass.getMethod("jjtGetNumChildren", new Class[0]).invoke(element, new Object[0])).intValue();
 				Object[] children = new Object[numChildren];
 				for (int i = 0; i < numChildren; i++) {
 					children[i] = this.nodeClass.getMethod("jjtGetChild", new Class[] { Integer.TYPE }).invoke(element, new Object[] { Integer.valueOf(i) });
-				}
-
-				switch( elementClass.getSimpleName() )
-				{
-				case "ASTCompilationUnit": 
-					for( Object child : children )
-					{
-						String name = child.getClass().getSimpleName();
-						if( name.equals("ASTClassOrInterfaceDeclaration") || name.equals("ASTEnumDeclaration") )
-							displayedChildren.add(child);
-					}
-					break;
-				case "ASTClassOrInterfaceDeclaration": break;
-				case "ASTEnumDeclaration": break;
-				case "ASTClassOrInterfaceBodyDeclaration": break;
 				}
 
 				return children;
@@ -403,7 +423,19 @@ public class ShadowCompilerInterface
 				ex.printStackTrace();
 			}
 		}
-		return displayedChildren.toArray();
+		return new Object[0];
+	}
+	
+	public int getLength(Object element)
+	{
+		if( element instanceof Tree )
+		{
+			Tree tree = (Tree) element;
+			return tree.getLength();			
+		}
+		
+		return 1;
+		
 	}
 
 	public int getLine(Object element)
