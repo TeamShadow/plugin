@@ -7,17 +7,19 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.BaseLabelProvider;
-import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StyledString;
 import org.eclipse.swt.graphics.Image;
 import org.osgi.framework.Bundle;
 
 import shadow.plugin.ShadowPlugin;
+import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.plugin.compiler.ShadowCompilerInterface.Tree;
 
 public class ShadowLabelProvider
-extends BaseLabelProvider
-implements ILabelProvider
+extends LabelProvider
+implements IStyledLabelProvider
 {	
 	private final Map<ShadowLabel, Image> images = new HashMap<ShadowLabel, Image>();
 
@@ -40,7 +42,7 @@ implements ILabelProvider
 		}	
 	}
 
-
+	@Override
 	public String getText(Object element)
 	{
 		if ((element == null) || ((element instanceof String)) || 
@@ -49,7 +51,26 @@ implements ILabelProvider
 		}
 		return element.toString();
 	}
+	
+	@Override
+	public StyledString getStyledText(Object element)
+	{
+		
+		if ((element == null) || ((element instanceof String)) || 
+				((element instanceof ShadowOutlineError))) {
+			return new StyledString(String.valueOf(element));
+		}
+		else if( element instanceof ShadowCompilerInterface.Tree )
+		{
+			ShadowCompilerInterface.Tree tree = (Tree) element;
+			return tree.toStyledString();			
+		}
+		else
+			return new StyledString(element.toString());
+		
+	}
 
+	@Override
 	public Image getImage(Object element)
 	{
 		if( element instanceof Tree )
@@ -61,6 +82,7 @@ implements ILabelProvider
 			return images.get(ShadowLabel.ERROR);
 	}
 
+	@Override
 	public void dispose()
 	{
 		super.dispose();

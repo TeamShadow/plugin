@@ -6,9 +6,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.viewers.StyledString;
 
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.outline.ShadowLabel;
@@ -18,6 +20,7 @@ public class ShadowCompilerInterface
 	private Class<?> parserClass;
 	private Class<?> declarationClass;
 	private Class<?> nodeClass;
+	private Class<?> dimensionNodeClass;
 	private int errorLine;
 	private int errorColumn;
 	private String message = null;	
@@ -35,6 +38,7 @@ public class ShadowCompilerInterface
 			this.parserClass = loader.loadClass("shadow.parser.javacc.ShadowParser");
 			this.nodeClass = loader.loadClass("shadow.parser.javacc.Node");
 			this.declarationClass = loader.loadClass("shadow.parser.javacc.ASTClassOrInterfaceDeclaration");
+			this.dimensionNodeClass = loader.loadClass("shadow.parser.javacc.DimensionNode");
 		}
 		catch (ClassNotFoundException | MalformedURLException e)
 		{
@@ -92,13 +96,7 @@ public class ShadowCompilerInterface
 			this.label = label;	
 			this.extra = extra;
 			
-			try {
-				this.name = (String)nodeClass.getMethod("getImage", new Class[0]).invoke(node, new Object[0]);
-			} catch (IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException
-					| SecurityException e) {
-				this.name = "";
-			}			
+			this.name = getImage(node);
 		}
 
 		public void setChildren(Tree[] children)
@@ -128,14 +126,27 @@ public class ShadowCompilerInterface
 				if( label == ShadowLabel.FIELD || label == ShadowLabel.CONSTANT ) 
 					return name + ": " + extra;
 			
-				else if( label == ShadowLabel.PRIVATE_METHOD ||
-						 label == ShadowLabel.PROTECTED_METHOD  || 
-						 label == ShadowLabel.PUBLIC_METHOD )
+				else 
 					return name + extra;
 			}			
 			
 			return name;
 		}
+		
+		public StyledString toStyledString()
+		{
+			if( extra != null && !extra.isEmpty() )
+			{
+				if( label == ShadowLabel.FIELD || label == ShadowLabel.CONSTANT ) 
+					return new StyledString(name).append( ": " + extra, StyledString.DECORATIONS_STYLER);
+			
+				else 
+					return new StyledString(name + extra);
+			}			
+			
+			return new StyledString(name);
+		}
+		
 		
 		public Object getNode()
 		{
@@ -173,6 +184,54 @@ public class ShadowCompilerInterface
 		
 		return node;
 	}
+	
+	private String getImage(Object node)
+	{		
+		try {
+			return (String)nodeClass.getMethod("getImage", new Class[0]).invoke(node, new Object[0]);
+		} catch (IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			
+			return "";
+		}
+	}
+	
+	private String getType(Object element)
+	{
+		for(Object node : getNodes(element) )
+			if( node.getClass().getSimpleName().equals("ASTType"))
+				return processType(node);
+		
+		
+		return "";
+	}
+	
+	@SuppressWarnings("unchecked")
+	private String getArrayDimensions(Object node)
+	{		
+		try {
+			
+			List<Integer> dimensions = (List<Integer>)dimensionNodeClass.getMethod("getArrayDimensions", new Class[0]).invoke(node, new Object[0]);
+			StringBuilder sb = new StringBuilder();
+			for( int size : dimensions )
+			{
+					sb.append("[");
+					for( int i = 1; i < size; ++i  )
+						sb.append(",");
+					sb.append("]");
+			}
+			
+			return sb.toString(); //can be empty String if dimensions are empty 	
+			
+		} catch (IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			
+			return "";
+		}
+	}
+	
 
 	private Object[] getNodes(Object node)
 	{
@@ -230,6 +289,92 @@ public class ShadowCompilerInterface
 		else
 			children.add(buildTree(declarator, tree));
 	}
+	
+	private String processType( Object type )
+	{		
+		Object[] nodes;
+		StringBuilder sb;
+		boolean first = true;
+		
+		Class<? extends Object> typeClass = type.getClass();
+		switch( typeClass.getSimpleName() )
+		{
+		case "ASTType": return processType( getNodes(type)[0] );			
+		case "ASTPrimitiveType": return getImage( type );
+		case "ASTFunctionType":
+			nodes = getNodes(type);
+			return processType(nodes[0]) + " => " + processType(nodes[1]);			
+		case "ASTReferenceType": return processType( getNodes(type)[0] ) + getArrayDimensions( type );
+		case "ASTClassOrInterfaceType":
+			sb = new StringBuilder();
+			for( Object node : getNodes(type) )
+				if( node.getClass().getSimpleName().equals("ASTClassOrInterfaceTypeSuffix"))
+					if( first )
+					{
+						sb.append(processType(node));
+						first = false;
+					}	
+					else
+						sb.append(":").append(processType(node));
+						
+			return sb.toString();
+		case "ASTClassOrInterfaceTypeSuffix":
+			nodes = getNodes(type);
+			if( nodes.length > 0 )
+				return getImage(type) + processType( nodes[0] );
+			else
+				return getImage(type);
+		case "ASTTypeArguments":
+		case "ASTTypeParameters":
+			sb = new StringBuilder("<");
+			for( Object node : getNodes(type) )
+				if( first )
+				{
+					sb.append(processType(node));
+					first = false;
+				}
+				else
+					sb.append(",").append(processType(node));
+			sb.append(">");
+			return sb.toString();
+		case "ASTTypeParameter":
+			nodes = getNodes(type);
+			if( nodes.length > 0 )
+				return getImage(type) + " " + processType(nodes[0]);
+			else
+				return getImage(type);
+		case "ASTIsList":
+			sb = new StringBuilder("is ");
+			for( Object node : getNodes(type) )
+				if( first )
+				{
+					sb.append(processType(node));
+					first = false;
+				}
+				else
+					sb.append(" and ").append(processType(node));	
+			return sb.toString();
+		case "ASTResultTypes":
+		case "ASTFormalParameters":
+			sb = new StringBuilder("(");
+			for( Object node : getNodes(type) )
+				if( first )
+				{
+					sb.append(processType(node));
+					first = false;
+				}
+				else
+					sb.append(",").append(processType(node));
+			sb.append(")");
+			return sb.toString();
+		case "ASTResultType":
+		case "ASTFormalParameter":
+			nodes = getNodes(type);
+			return nodes[0].toString() + processType(nodes[1]);
+		}
+		
+		return "";
+	}
 
 	private Tree buildTree(Object element, Tree parent)
 	{
@@ -240,6 +385,7 @@ public class ShadowCompilerInterface
 		
 		String modifiers;
 		String kind;
+		String type;
 
 		switch( elementClass.getSimpleName() )
 		{
@@ -265,17 +411,20 @@ public class ShadowCompilerInterface
 			break;		 
 		case "ASTClassOrInterfaceDeclaration":
 			
-				
+			String typeParameters = "";
+			for( Object node : nodes )
+				if( node.getClass().getSimpleName().equals("ASTTypeParameters") )
+					typeParameters = processType(node);
 			
 			kind = getKind(element);
 			if( kind.contains("singleton"))
-				tree = new Tree(element, parent, ShadowLabel.SINGLETON);
+				tree = new Tree(element, parent, typeParameters, ShadowLabel.SINGLETON);
 			else if( kind.contains("exception"))
-				tree = new Tree(element, parent, ShadowLabel.EXCEPTION);
+				tree = new Tree(element, parent, typeParameters, ShadowLabel.EXCEPTION);
 			else if( kind.contains("interface"))
-				tree = new Tree(element, parent, ShadowLabel.INTERFACE);
+				tree = new Tree(element, parent, typeParameters, ShadowLabel.INTERFACE);
 			else
-				tree = new Tree(element, parent, ShadowLabel.CLASS);
+				tree = new Tree(element, parent, typeParameters, ShadowLabel.CLASS);
 			
 			for( Object node : nodes )
 			{
@@ -311,24 +460,34 @@ public class ShadowCompilerInterface
 			break;
 		case "ASTVariableDeclarator":
 			modifiers = getModifiers(getParent(element));
+			type = getType(getParent(element));
 			if( modifiers.contains("constant") )
-				tree = new Tree(element, parent, ShadowLabel.CONSTANT);
+				tree = new Tree(element, parent, type, ShadowLabel.CONSTANT);
 			else
-				tree = new Tree(element, parent, ShadowLabel.FIELD);
+				tree = new Tree(element, parent, type, ShadowLabel.FIELD);
 			break;
 		case "ASTCreateDeclaration":
 		case "ASTDestroyDeclaration":
-		case "ASTMethodDeclarator":			
-			if(elementClass.getSimpleName().equals("ASTMethodDeclarator"))			
+		case "ASTMethodDeclarator":
+			type = "";
+			if(elementClass.getSimpleName().equals("ASTMethodDeclarator"))
+			{
+				type = processType(nodes[0]) + " => " + processType(nodes[1]); 
 				modifiers = getModifiers(getParent(element));
+			}
+			else if( elementClass.getSimpleName().equals("ASTCreateDeclaration") )
+			{
+				type = processType(getNodes(nodes[0])[0]);
+				modifiers = getModifiers(element);				
+			}
 			else
 				modifiers = getModifiers(element);			
 			if( modifiers.contains("public"))
-				tree = new Tree(element, parent, ShadowLabel.PUBLIC_METHOD);
+				tree = new Tree(element, parent, type, ShadowLabel.PUBLIC_METHOD);
 			else if( modifiers.contains("protected"))
-				tree = new Tree(element, parent, ShadowLabel.PROTECTED_METHOD);
+				tree = new Tree(element, parent, type, ShadowLabel.PROTECTED_METHOD);
 			else
-				tree = new Tree(element, parent, ShadowLabel.PRIVATE_METHOD);
+				tree = new Tree(element, parent, type, ShadowLabel.PRIVATE_METHOD);
 			break;
 		}
 
