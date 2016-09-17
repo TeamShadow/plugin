@@ -59,7 +59,8 @@ public class ShadowEditor
     }
   }
   
-  public Object getAdapter(Class adapter)
+  @SuppressWarnings("rawtypes")
+public Object getAdapter(Class adapter)
   {
     if (IContentOutlinePage.class.equals(adapter))
     {

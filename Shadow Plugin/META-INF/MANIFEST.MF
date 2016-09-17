@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: EclipsePlugin
+Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.shadow-language;singleton:=true
 Bundle-Version: 0.6.0
 Bundle-Activator: shadow.plugin.ShadowPlugin
@@ -9,11 +9,13 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jface.text,
  org.eclipse.ui.editors,
  org.eclipse.core.resources;bundle-version="3.8.101",
- org.eclipse.ui.views;bundle-version="3.6.100"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+ org.eclipse.ui.views;bundle-version="3.6.100",
+ org.eclipse.ui.workbench
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: shadow.plugin,
  shadow.plugin.compiler,
  shadow.plugin.editor,
  shadow.plugin.outline,
+ shadow.plugin.preferences,
  shadow.plugin.util
