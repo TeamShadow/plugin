@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.shadow-language.plugin_0.6.0.jar" id="org.shadow-language.plugin" version="0.6.0">
+   <bundle id="org.shadow-language" version="0.7.0">
       <category name="Shadow Eclipse Plug-in"/>
-   </feature>
+   </bundle>
    <category-def name="Shadow Eclipse Plug-in" label="Shadow Eclipse Plug-in"/>
 </site>
