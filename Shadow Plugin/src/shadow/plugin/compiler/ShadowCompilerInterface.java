@@ -5,9 +5,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
+
+import javax.swing.JOptionPane;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.StyledString;
@@ -16,11 +18,13 @@ import shadow.plugin.ShadowPlugin;
 import shadow.plugin.outline.ShadowLabel;
 
 public class ShadowCompilerInterface
-{
-	private Class<?> parserClass;
-	private Class<?> declarationClass;
-	private Class<?> nodeClass;
-	private Class<?> dimensionNodeClass;
+{	
+	private Class<?> contextClass; // replaces nodeClass
+	private Class<?> shadowParserClass; // replaces parserClass, deprecated.
+	private Class<?> parseCheckerClass; // replaces parserClass. Need to implement	
+	private Class<?> loggersClass; // need to implement 
+	//private Class<?> loggerClass; // need to implement
+	private Class<?> errorReporterClass; // need to implement
 	private int errorLine;
 	private int errorColumn;
 	private String message = null;	
@@ -33,16 +37,36 @@ public class ShadowCompilerInterface
 			        .getPreferenceStore();
 			String pathToJar = preferenceStore.getString("PATH");
 			
+			//JOptionPane.showMessageDialog(null, "The path to Jar: " + pathToJar); // Testing
+			
 			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
+			
+			//JOptionPane.showMessageDialog(null, "The Url: " + urls.toString()); // Testing
+			
 			URLClassLoader loader = URLClassLoader.newInstance(urls);
-			this.parserClass = loader.loadClass("shadow.parser.javacc.ShadowParser");
-			this.nodeClass = loader.loadClass("shadow.parser.javacc.Node");
-			this.declarationClass = loader.loadClass("shadow.parser.javacc.ASTClassOrInterfaceDeclaration");
-			this.dimensionNodeClass = loader.loadClass("shadow.parser.javacc.DimensionNode");
+			
+			//JOptionPane.showMessageDialog(null, "The loader: " + loader); // Testing
+			
+			this.shadowParserClass = loader.loadClass("shadow.parse.ShadowParser"); // replaces parserClass 
+			this.contextClass = loader.loadClass("shadow.parse.Context"); // replaces nodeClass			
+			this.loggersClass = loader.loadClass("shadow.Loggers");
+			//this.loggerClass = loader.loadClass("org.apache.logging.log4j.Logger");
+			this.errorReporterClass = loader.loadClass("shadow.typecheck.ErrorReporter");
+			this.parseCheckerClass = loader.loadClass("shadow.parse.ParseChecker");
+			
+			
+			
+			//JOptionPane.showMessageDialog(null, "The Compiler Interface has finished being initialized"); // Testing
+			
+			//this.declarationClass = loader.loadClass("shadow.parser.javacc.ASTClassOrInterfaceDeclaration");
+			//this.dimensionNodeClass = loader.loadClass("shadow.parser.javacc.DimensionNode");
 		}
 		catch (ClassNotFoundException | MalformedURLException e)
 		{
-			this.parserClass = (this.nodeClass = null);
+			JOptionPane.showMessageDialog(null, "The Compiler Interface failed to initialize.");
+			JOptionPane.showMessageDialog(null, e.toString());
+			
+			this.shadowParserClass = (this.contextClass = null);
 		}
 	}
 
@@ -61,8 +85,8 @@ public class ShadowCompilerInterface
 		return message;
 	}
 	
-	
-	private String getKind(Object declaration)
+	// deprecated, and no longer used.
+	/*private String getKind(Object declaration)
 	{
 		try {
 			Object kind = declarationClass.getMethod("getKind", new Class[0]).invoke(declaration, new Object[0]);
@@ -72,7 +96,7 @@ public class ShadowCompilerInterface
 				| SecurityException e) {
 			return "";
 		}		
-	}
+	}*/
 
 
 	public class Tree
@@ -96,7 +120,7 @@ public class ShadowCompilerInterface
 			this.label = label;	
 			this.extra = extra;
 			
-			this.name = getImage(node);
+			this.name = getContextChildren(node)[1].toString();
 		}
 
 		public void setChildren(Tree[] children)
@@ -169,12 +193,12 @@ public class ShadowCompilerInterface
 		}
 	}	
 	
-	private Object getParent(Object node)
+	private Object getParent(Object context)
 	{
-		if ((this.nodeClass != null) && (this.nodeClass.isInstance(node))) {
+		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
 			try
 			{
-				return this.nodeClass.getMethod("jjtGetParent", new Class[0]).invoke(node, new Object[0]);
+				return this.contextClass.getMethod("getParent", new Class[0]).invoke(context, new Object[0]);
 			}
 			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
 			{
@@ -182,32 +206,20 @@ public class ShadowCompilerInterface
 			}
 		}
 		
-		return node;
-	}
-	
-	private String getImage(Object node)
-	{		
-		try {
-			return (String)nodeClass.getMethod("getImage", new Class[0]).invoke(node, new Object[0]);
-		} catch (IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException | NoSuchMethodException
-				| SecurityException e) {
-			
-			return "";
-		}
-	}
+		return context;
+	}	
 	
 	private String getType(Object element)
 	{
-		for(Object node : getNodes(element) )
-			if( node.getClass().getSimpleName().equals("ASTType"))
-				return processType(node);
+		for(Object context : getContexts(element) )
+			if( context.getClass().getSimpleName().equals("Type"))
+				return processType(context);
 		
 		
 		return "";
 	}
 	
-	@SuppressWarnings("unchecked")
+	/*@SuppressWarnings("unchecked")
 	private String getArrayDimensions(Object node)
 	{		
 		try {
@@ -231,36 +243,19 @@ public class ShadowCompilerInterface
 			return "";
 		}
 	}
+	*/
+
 	
 
-	private Object[] getNodes(Object node)
-	{
-		if ((this.nodeClass != null) && (this.nodeClass.isInstance(node))) {
-			try
-			{
-				int numChildren = ((Integer)this.nodeClass.getMethod("jjtGetNumChildren", new Class[0]).invoke(node, new Object[0])).intValue();
-				Object[] nodes = new Object[numChildren];
-				for (int i = 0; i < numChildren; i++) {
-					nodes[i] = this.nodeClass.getMethod("jjtGetChild", new Class[] { Integer.TYPE }).invoke(node, new Object[] { Integer.valueOf(i) });
-				}
-
-				return nodes;
-			}
-			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
-			{
-				ex.printStackTrace();
-			}
-		}
-		
-		return new Object[0];
-	}
 	
-	private String getModifiers(Object node)
+	
+	// where is this used, and is need to use
+	private String getModifiers(Object context)
 	{
-		if ((this.nodeClass != null) && (this.nodeClass.isInstance(node))) {
+		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
 			try
 			{
-				Object modifiers = this.nodeClass.getMethod("getModifiers", new Class[0]).invoke(node, new Object[0]);
+				Object modifiers = this.contextClass.getMethod("getModifiers", new Class[0]).invoke(context, new Object[0]);
 				return modifiers.toString();
 			}
 			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
@@ -272,151 +267,160 @@ public class ShadowCompilerInterface
 		return "";
 	}
 	
+	// [work]
 	private void bodyDeclaration(Object declaration, Tree tree, ArrayList<Tree> children)
 	{
 		//element 0 is modifiers, element 1 is declarator
-		Object[] modifierAndDeclarator = getNodes(declaration);
+		Object[] modifierAndDeclarator = getContexts(declaration);
 		Object declarator = modifierAndDeclarator[1];
 		
-		if( declarator.getClass().getSimpleName().equals("ASTFieldDeclaration"))
+		if( declarator.getClass().getSimpleName().equals("FieldDeclaration"))
 		{
-			Object[] variables = getNodes(declarator);
+			// may need to get 
+			Object[] variables = getContexts(declarator);
 			for( int i = 1; i < variables.length; ++i )
 				children.add(buildTree(variables[i], tree));							
 		}
-		else if( declarator.getClass().getSimpleName().equals("ASTMethodDeclaration")  )							
-			children.add(buildTree(getNodes(declarator)[0], tree));
+		else if( declarator.getClass().getSimpleName().equals("MethodDeclaration")  )							
+			children.add(buildTree(getContexts(declarator)[0], tree));
 		else
 			children.add(buildTree(declarator, tree));
 	}
 	
+	// [work]
 	private String processType( Object type )
 	{		
-		Object[] nodes;
+		Object[] contexts;
 		StringBuilder sb;
 		boolean first = true;
 		
 		Class<? extends Object> typeClass = type.getClass();
-		switch( typeClass.getSimpleName() )
+		//System.out.println("Simple name" + typeClass.getSimpleName()); // for testing
+		switch( typeClass.getSimpleName() ) // need to learn what getSimpleName() does
 		{
-		case "ASTType": return processType( getNodes(type)[0] );			
-		case "ASTPrimitiveType": return getImage( type );
-		case "ASTFunctionType":
-			nodes = getNodes(type);
-			return processType(nodes[0]) + " => " + processType(nodes[1]);			
-		case "ASTReferenceType": return processType( getNodes(type)[0] ) + getArrayDimensions( type );
-		case "ASTClassOrInterfaceType":
+		case "Type": return processType( getContexts(type)[0] );			
+		case "PrimitiveType": return type.toString() ; // Look into getImage
+		case "FunctionType":
+			contexts = getContexts(type);
+			return processType(contexts[0]) + " => " + processType(contexts[1]);			
+		case "ReferenceType": return  type.toString();//processType( getContexts(type)[0] ) //+ getArrayDimensions( type ); // getArrayDimensions is not longer going to be used, mightjust have to use a toString method.
+		case "ClassOrInterfaceType":
 			sb = new StringBuilder();
-			for( Object node : getNodes(type) )
-				if( node.getClass().getSimpleName().equals("ASTClassOrInterfaceTypeSuffix"))
+			for( Object context : getContexts(type) )
+				if( context.getClass().getSimpleName().equals("ClassOrInterfaceTypeSuffix"))
 					if( first )
 					{
-						sb.append(processType(node));
+						sb.append(processType(context));
 						first = false;
 					}	
 					else
-						sb.append(":").append(processType(node));
+						sb.append(":").append(processType(context));
 						
 			return sb.toString();
-		case "ASTClassOrInterfaceTypeSuffix":
-			nodes = getNodes(type);
-			if( nodes.length > 0 )
-				return getImage(type) + processType( nodes[0] );
+		case "ClassOrInterfaceTypeSuffix":
+			contexts = getContextChildren(type); //getContexts(type);
+			if( contexts.length > 1 )
+				return contexts[0].toString() + processType( contexts[1] );
 			else
-				return getImage(type);
-		case "ASTTypeArguments":
-		case "ASTTypeParameters":
+				return contexts[0].toString();
+		case "TypeArguments":
+		case "TypeParameters":
 			sb = new StringBuilder("<");
-			for( Object node : getNodes(type) )
+			for( Object context : getContexts(type) )
 				if( first )
 				{
-					sb.append(processType(node));
+					sb.append(processType(context));
 					first = false;
 				}
 				else
-					sb.append(",").append(processType(node));
+					sb.append(",").append(processType(context));
 			sb.append(">");
 			return sb.toString();
-		case "ASTTypeParameter":
-			nodes = getNodes(type);
-			if( nodes.length > 0 )
-				return getImage(type) + " " + processType(nodes[0]);
+		case "TypeParameter":
+			contexts = getContextChildren(type);
+			if( contexts.length > 1 )
+				return contexts[0].toString() + " " + processType(contexts[1]);
 			else
-				return getImage(type);
-		case "ASTIsList":
+				return contexts[0].toString();
+		case "IsList":
 			sb = new StringBuilder("is ");
-			for( Object node : getNodes(type) )
+			for( Object context : getContexts(type) )
 				if( first )
 				{
-					sb.append(processType(node));
+					sb.append(processType(context));
 					first = false;
 				}
 				else
-					sb.append(" and ").append(processType(node));	
+					sb.append(" and ").append(processType(context));	
 			return sb.toString();
-		case "ASTResultTypes":
-		case "ASTFormalParameters":
+		case "ResultTypes":
+		case "FormalParameters":
 			sb = new StringBuilder("(");
-			for( Object node : getNodes(type) )
+			for( Object context : getContexts(type) )
 				if( first )
 				{
-					sb.append(processType(node));
+					sb.append(processType(context));
 					first = false;
 				}
 				else
-					sb.append(",").append(processType(node));
+					sb.append(",").append(processType(context));
 			sb.append(")");
 			return sb.toString();
-		case "ASTResultType":
-		case "ASTFormalParameter":
-			nodes = getNodes(type);
-			return nodes[0].toString() + processType(nodes[1]);
+		case "ResultType":
+		case "FormalParameter":
+			contexts = getContexts(type);
+			return contexts[0].toString() + processType(contexts[1]);
 		}
 		
 		return "";
 	}
 
+	// [work]
 	private Tree buildTree(Object element, Tree parent)
 	{
-		Tree tree = null;
-		Class<? extends Object> elementClass = element.getClass();
+		// Change the names that are typed 'node(s)' to 'Context(s)'
+		// The parent is null when passed in.
+		Tree tree = null; 
+		Class<? extends Object> elementClass = element.getClass(); 
 		ArrayList<Tree> children = new ArrayList<Tree>();
-		Object[] nodes = getNodes(element);	
+		Object[] contexts = getContexts(element);	
 		
 		String modifiers;
 		String kind;
 		String type;
 
+		String temp = elementClass.getSimpleName();
+		
 		switch( elementClass.getSimpleName() )
 		{
-		case "ASTCompilationUnit": 
+		case "CompilationUnitContext": 
 			tree = new Tree(element, parent, ShadowLabel.COMPILATION_UNIT);
-			for( Object node : nodes )
+			for( Object context : contexts )
 			{
-				String name = node.getClass().getSimpleName();
-				if( name.equals("ASTClassOrInterfaceDeclaration") || name.equals("ASTEnumDeclaration") )
+				String name = context.getClass().getSimpleName();
+				if( name.equals("ClassOrInterfaceDeclaration") || name.equals("EnumDeclaration") )
 				{	 
-					for( Object detail :  getNodes(node) )
+					for( Object detail :  getContexts(context) )
 					{
-						if( detail.getClass().getSimpleName().equals("ASTUnqualifiedName") )
+						if( detail.getClass().getSimpleName().equals("UnqualifiedName") )
 						{
 							children.add(new Tree(detail, tree, ShadowLabel.PACKAGE));
 							break;
 						}						
 					}					
 					
-					children.add(buildTree(node, tree));
+					children.add(buildTree(context, tree));
 				}
 			}
 			break;		 
-		case "ASTClassOrInterfaceDeclaration":
+		case "ClassOrInterfaceDeclarationContext": // Professor Wittman said that antler removed the need for this.
 			
 			String typeParameters = "";
-			for( Object node : nodes )
-				if( node.getClass().getSimpleName().equals("ASTTypeParameters") )
+			for( Object node : contexts )
+				if( node.getClass().getSimpleName().equals("TypeParametersContext") )
 					typeParameters = processType(node);
 			
-			kind = getKind(element);
+			kind = getContextChildren(element)[0].toString();
 			if( kind.contains("singleton"))
 				tree = new Tree(element, parent, typeParameters, ShadowLabel.SINGLETON);
 			else if( kind.contains("exception"))
@@ -426,28 +430,28 @@ public class ShadowCompilerInterface
 			else
 				tree = new Tree(element, parent, typeParameters, ShadowLabel.CLASS);
 			
-			for( Object node : nodes )
+			for( Object node : contexts )
 			{
 				String name = node.getClass().getSimpleName();
-				if( name.equals("ASTClassOrInterfaceBody") )
+				if( name.equals("ClassOrInterfaceBodyContext") )
 				{
-					Object[] declarations = getNodes(node);
+					Object[] declarations = getContexts(node);
 					for( Object declaration : declarations )
 						bodyDeclaration(declaration, tree, children);		
 				}
 			}
 			break;
-		case "ASTEnumDeclaration":
+		case "EnumDeclarationContext": // check what the actual names are
 			tree = new Tree(element, parent, ShadowLabel.ENUM);
-			for( Object node : nodes )
+			for( Object context : contexts )
 			{
-				String name = node.getClass().getSimpleName();
-				if( name.equals("ASTEnumBody") )
+				String name = context.getClass().getSimpleName();
+				if( name.equals("EnumBodyContext") )
 				{
-					Object[] declarations = getNodes(node);
+					Object[] declarations = getContexts(context);
 					for( Object declaration : declarations )
 					{
-						if( declaration.getClass().getSimpleName().equals("ASTEnumConstant"))
+						if( declaration.getClass().getSimpleName().equals("EnumConstantContext"))
 							children.add(buildTree(declaration, tree));
 						else //body declaration
 							bodyDeclaration(declaration, tree, children);
@@ -455,10 +459,10 @@ public class ShadowCompilerInterface
 				}
 			}			
 			break;
-		case "ASTEnumConstant":
+		case "EnumConstantContext":
 			tree = new Tree(element, parent, ShadowLabel.CONSTANT);
 			break;
-		case "ASTVariableDeclarator":
+		case "VariableDeclaratorContext":
 			modifiers = getModifiers(getParent(element));
 			type = getType(getParent(element));
 			if( modifiers.contains("constant") )
@@ -466,28 +470,31 @@ public class ShadowCompilerInterface
 			else
 				tree = new Tree(element, parent, type, ShadowLabel.FIELD);
 			break;
-		case "ASTCreateDeclaration":
-		case "ASTDestroyDeclaration":
-		case "ASTMethodDeclarator":
+		case "CreateDeclarationContext":
+		case "DestroyDeclarationContext":
+		case "MethodDeclaratorContext":
 			type = "";
-			if(elementClass.getSimpleName().equals("ASTMethodDeclarator"))
+			
+			if(elementClass.getSimpleName().equals("MethodDeclaratorContext"))
 			{
-				type = processType(nodes[0]) + " => " + processType(nodes[1]); 
+				type = processType(contexts[0]) + " => " + processType(contexts[1]); 
 				modifiers = getModifiers(getParent(element));
 			}
-			else if( elementClass.getSimpleName().equals("ASTCreateDeclaration") )
+			else if( elementClass.getSimpleName().equals("CreateDeclarationContext") )
 			{
-				type = processType(getNodes(nodes[0])[0]);
+				type = processType(getContexts(contexts[0])[0]);
 				modifiers = getModifiers(element);				
 			}
 			else
-				modifiers = getModifiers(element);			
+				modifiers = getModifiers(element);
+			
 			if( modifiers.contains("public"))
 				tree = new Tree(element, parent, type, ShadowLabel.PUBLIC_METHOD);
 			else if( modifiers.contains("protected"))
 				tree = new Tree(element, parent, type, ShadowLabel.PROTECTED_METHOD);
 			else
 				tree = new Tree(element, parent, type, ShadowLabel.PRIVATE_METHOD);
+			
 			break;
 		}
 
@@ -495,17 +502,44 @@ public class ShadowCompilerInterface
 		return tree;
 	}
 
-	public Tree compile(InputStream input)
+	// [work] [ continued from here
+	public Tree compile(Path input)
 	{
 		this.errorLine = (this.errorColumn = 0);
 		this.message = null;
-		if (this.parserClass != null) {
+		if (this.shadowParserClass != null) {
 			try
 			{
-				Object parser = this.parserClass.getConstructor(new Class[] { InputStream.class })
-						.newInstance(new Object[] {input });
-				return buildTree(this.parserClass.getMethod("CompilationUnit", new Class[0])
-						.invoke(parser, new Object[0]), null);
+				
+			   /* Object loggers = this.loggersClass.getConstructor(new Class[0])
+			    		.newInstance(new Object[0]);*/						
+				
+			    
+			    java.lang.reflect.Field logger = loggersClass.getField("PARSER");			    			    
+			    
+			    Object loggerValue = logger.get(null);
+			    
+			    Class<?> loggerClassType = logger.getType(); 			    
+			    
+			    Object errorReporter = this.errorReporterClass.getConstructor(new Class[] { loggerClassType })
+			    		.newInstance(new Object[] { loggerValue }); 
+			    
+			    Object parseChecker = this.parseCheckerClass.getConstructor(new Class[] { errorReporter.getClass() })
+			    		.newInstance(new Object[] { errorReporter });
+				
+				
+/*				Object parser = this.parserClass.getConstructor(new Class[] { InputStream.class })
+						.newInstance(new shadowParserClassObject[] {input });*/
+				/*Object parser = this.shadowParserClass.getConstructor(new Class[] { InputStream.class })
+						.newInstance(new Object[] { input }); // Need to get the parse checker
+*/				
+				/*return buildTree(this.parserClass.getMethod("CompilationUnit", new Class[0])
+						.invoke(parser, new Object[0]), null);*/
+				/*return buildTree(this.shadowParserClass.getMethod("getCompilationUnit", new Class[] { Path.class }) // Get things from parse check and pass in a path.
+						.invoke(parser, new Object[] { input }), null);*/
+				
+				return buildTree(this.parseCheckerClass.getMethod("getCompilationUnit", new Class[] { Path.class })
+						.invoke(parseChecker, new Object[] { input }), null);
 			}
 			catch (InvocationTargetException ex)
 			{
@@ -526,17 +560,26 @@ public class ShadowCompilerInterface
 		return null;
 	}
 
+	// [This method seems like it should be deprecated]
 	public Object compile(InputStream input, String encoding)
 	{
 		this.errorLine = (this.errorColumn = 0);
 		this.message = null;
-		if (this.parserClass != null) {
+		if (this.shadowParserClass != null) {
 			try
 			{
-				Object parser = this.parserClass
+				/*Object parser = this.parserClass
+						.getConstructor(new Class[] {InputStream.class, String.class })
+						.newInstance(new Object[] {input, encoding });*/
+				
+				
+				Object parser = this.shadowParserClass
 						.getConstructor(new Class[] {InputStream.class, String.class })
 						.newInstance(new Object[] {input, encoding });
-				return this.parserClass.getMethod("CompilationUnit", new Class[0])
+				
+				/*return this.parserClass.getMethod("CompilationUnit", new Class[0])
+						.invoke(parser, new Object[0]);*/
+				return this.shadowParserClass.getMethod("compilationUnit", new Class[0])
 						.invoke(parser, new Object[0]);
 			}
 			catch (InvocationTargetException ex) 
@@ -558,21 +601,84 @@ public class ShadowCompilerInterface
 		return null;
 	}
 
-	public boolean hasChildren(Object element)
+	// Is not currently used [checked 1.0]
+	/*public boolean hasChildren(Object element)
 	{
 		return getChildren(element).length != 0;
-	}
+	}*/
 
-	public Object[] getChildren(Object element)
+	// Is used multiple times [checked 1.0]
+	private Object[] getContexts(Object context)
+	{
+		// this.contextClass()
+		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
+			try
+			{
+				// Need to change the node stuff.
+				int numChildren = ((Integer)this.contextClass.getMethod("getChildCount", new Class[0]).invoke(context, new Object[0])).intValue();				 				
+				Object[] children = new Object[numChildren];
+				
+				
+				for (int i = 0; i < numChildren; i++) {
+					children[i] = this.contextClass.getMethod("getChild", new Class[] { Integer.TYPE }).invoke(context, new Object[] { Integer.valueOf(i) });
+				}
+
+				return children;
+			}
+			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		
+		return new Object[0];
+	}
+		
+	// Is used multiple times [checked 1.0]
+	private Object[] getContextChildren(Object context)
+	{
+		// this.contextClass()
+		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
+			try
+			{
+				// Need to change the node stuff.
+				int numChildren = ((Integer)this.contextClass.getMethod("getChildCount", new Class[0]).invoke(context, new Object[0])).intValue();
+				ArrayList<Object> contexts = new ArrayList<Object>(); 
+				
+				//Object[] contexts = new Object[numChildren];
+				
+				
+				for (int i = 0; i < numChildren; i++) {
+					Object child = this.contextClass.getMethod("getChild", new Class[] { Integer.TYPE }).invoke(context, new Object[] { Integer.valueOf(i) });
+					
+					if(this.contextClass.isInstance(context))
+					{
+						contexts.add(child);
+					}
+				}
+
+				return contexts.toArray();
+			}
+			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		
+		return new Object[0];
+	}
+	
+	// Used in a method that is not used
+	/*public Object[] getChildren(Object element)
 	{	
-		if ((this.nodeClass != null) && (this.nodeClass.isInstance(element)))
+		if ((this.contextClass != null) && (this.contextClass.isInstance(element)))
 		{
 			try
 			{   
-				int numChildren = ((Integer)this.nodeClass.getMethod("jjtGetNumChildren", new Class[0]).invoke(element, new Object[0])).intValue();
+				int numChildren = ((Integer)this.contextClass.getMethod("getChildCount", new Class[0]).invoke(element, new Object[0])).intValue();
 				Object[] children = new Object[numChildren];
 				for (int i = 0; i < numChildren; i++) {
-					children[i] = this.nodeClass.getMethod("jjtGetChild", new Class[] { Integer.TYPE }).invoke(element, new Object[] { Integer.valueOf(i) });
+					children[i] = this.contextClass.getMethod("getChild", new Class[] { Integer.TYPE }).invoke(element, new Object[] { Integer.valueOf(i) });
 				}
 
 				return children;
@@ -583,7 +689,7 @@ public class ShadowCompilerInterface
 			}
 		}
 		return new Object[0];
-	}
+	}*/
 	
 	public int getLength(Object element)
 	{
@@ -605,10 +711,10 @@ public class ShadowCompilerInterface
 			element = tree.getNode();			
 		}
 		
-		if ((this.nodeClass != null) && (this.nodeClass.isInstance(element))) {
+		if ((this.contextClass != null) && (this.contextClass.isInstance(element))) {
 			try
 			{
-				return ((Integer)this.nodeClass.getMethod("getLineStart", new Class[0]).invoke(element, new Object[0])).intValue();
+				return ((Integer)this.contextClass.getMethod("lineStart", new Class[0]).invoke(element, new Object[0])).intValue();
 			}
 			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
 			{
@@ -626,10 +732,10 @@ public class ShadowCompilerInterface
 			element = tree.getNode();			
 		}
 		
-		if ((this.nodeClass != null) && (this.nodeClass.isInstance(element))) {
+		if ((this.contextClass != null) && (this.contextClass.isInstance(element))) {
 			try
 			{
-				return ((Integer)this.nodeClass.getMethod("getColumnStart", new Class[0]).invoke(element, new Object[0])).intValue();
+				return ((Integer)this.contextClass.getMethod("columnStart", new Class[0]).invoke(element, new Object[0])).intValue();
 			}
 			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
 			{

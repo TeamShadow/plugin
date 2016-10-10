@@ -1,7 +1,7 @@
 package shadow.plugin.outline;
 
-import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Path;
 
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
@@ -27,8 +27,8 @@ public class ShadowContentProvider
     this.root = null;
     try
     {
-      File file = ((IPathEditorInput)newInput).getPath().toFile();
-      this.root = this.compiler.compile(new FileInputStream(file));
+      Path path = ((IPathEditorInput)newInput).getPath().toFile().toPath();
+      this.root = this.compiler.compile(path);
     }
     catch (Exception localException) {}   
   }
