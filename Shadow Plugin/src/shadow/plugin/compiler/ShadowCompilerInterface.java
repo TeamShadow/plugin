@@ -63,8 +63,8 @@ public class ShadowCompilerInterface
 		}
 		catch (ClassNotFoundException | MalformedURLException e)
 		{
-			JOptionPane.showMessageDialog(null, "The Compiler Interface failed to initialize.");
-			JOptionPane.showMessageDialog(null, e.toString());
+			//JOptionPane.showMessageDialog(null, "The Compiler Interface failed to initialize.");
+			//JOptionPane.showMessageDialog(null, e.toString());
 			
 			this.shadowParserClass = (this.contextClass = null);
 		}
@@ -119,8 +119,36 @@ public class ShadowCompilerInterface
 			this.parent = parent;
 			this.label = label;	
 			this.extra = extra;
+				
+			Object[] contexts = getTokens(node);
 			
-			this.name = getContextChildren(node)[1].toString();
+			if(label == ShadowLabel.CLASS || label == ShadowLabel.SINGLETON
+					|| label == ShadowLabel.EXCEPTION || label == ShadowLabel.INTERFACE)
+			{				
+				if(checkForPackage(contexts))
+					this.name = contexts[3].toString();
+				else
+					this.name = contexts[1].toString();
+			}
+			else if(label == ShadowLabel.PACKAGE)
+			{
+				StringBuilder sb = new StringBuilder();
+				for(int i = 0; i < contexts.length; i++)
+				{
+					sb.append(contexts[i].toString());
+				}
+				this.name = sb.toString();
+			}
+			else
+				this.name = contexts[0].toString(); //getContexts(node)[1].toString();
+		}
+		
+		private boolean checkForPackage(Object[] tokens)
+		{
+			if(tokens.length >= 4 && tokens[2].toString().equals("@"))
+				return true;
+			
+			return false;
 		}
 
 		public void setChildren(Tree[] children)
@@ -198,6 +226,7 @@ public class ShadowCompilerInterface
 		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
 			try
 			{
+				Object temp = this.contextClass.getMethod("getParent", new Class[0]).invoke(context, new Object[0]);
 				return this.contextClass.getMethod("getParent", new Class[0]).invoke(context, new Object[0]);
 			}
 			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
@@ -211,8 +240,8 @@ public class ShadowCompilerInterface
 	
 	private String getType(Object element)
 	{
-		for(Object context : getContexts(element) )
-			if( context.getClass().getSimpleName().equals("Type"))
+		for(Object context : getTokens(element) ) 
+			if( context.getClass().getSimpleName().equals("TypeContext"))
 				return processType(context);
 		
 		
@@ -249,13 +278,13 @@ public class ShadowCompilerInterface
 
 	
 	
-	// where is this used, and is need to use
 	private String getModifiers(Object context)
 	{
 		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
 			try
 			{
 				Object modifiers = this.contextClass.getMethod("getModifiers", new Class[0]).invoke(context, new Object[0]);
+				String temp  = modifiers.toString();
 				return modifiers.toString();
 			}
 			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
@@ -271,18 +300,22 @@ public class ShadowCompilerInterface
 	private void bodyDeclaration(Object declaration, Tree tree, ArrayList<Tree> children)
 	{
 		//element 0 is modifiers, element 1 is declarator
-		Object[] modifierAndDeclarator = getContexts(declaration);
+		Object[] modifierAndDeclarator = getTokens(declaration); // changed
 		Object declarator = modifierAndDeclarator[1];
 		
-		if( declarator.getClass().getSimpleName().equals("FieldDeclaration"))
+		String temp = declarator.getClass().getSimpleName();
+		
+		if( declarator.getClass().getSimpleName().equals("FieldDeclarationContext"))
 		{
-			// may need to get 
-			Object[] variables = getContexts(declarator);
-			for( int i = 1; i < variables.length; ++i )
-				children.add(buildTree(variables[i], tree));							
+			// works properly up to this point
+			
+			Object[] variables = getTokens(declarator); // changed
+			for( int i = 1; i < variables.length; ++i ) // variables[0] should be the data type
+				if(this.contextClass.isInstance(variables[i])) 
+					children.add(buildTree(variables[i], tree)); // Use the following to check for actual contexts this.contextClass.isInstance(obj)							
 		}
-		else if( declarator.getClass().getSimpleName().equals("MethodDeclaration")  )							
-			children.add(buildTree(getContexts(declarator)[0], tree));
+		else if( declarator.getClass().getSimpleName().equals("MethodDeclarationContext")  )							
+			children.add(buildTree(getTokens(declarator)[0], tree)); // changed
 		else
 			children.add(buildTree(declarator, tree));
 	}
@@ -296,18 +329,23 @@ public class ShadowCompilerInterface
 		
 		Class<? extends Object> typeClass = type.getClass();
 		//System.out.println("Simple name" + typeClass.getSimpleName()); // for testing
+		
+		String temp1 = typeClass.getSimpleName(); // One value came out as TerminalNodeImp1
 		switch( typeClass.getSimpleName() ) // need to learn what getSimpleName() does
 		{
-		case "Type": return processType( getContexts(type)[0] );			
-		case "PrimitiveType": return type.toString() ; // Look into getImage
-		case "FunctionType":
-			contexts = getContexts(type);
-			return processType(contexts[0]) + " => " + processType(contexts[1]);			
-		case "ReferenceType": return  type.toString();//processType( getContexts(type)[0] ) //+ getArrayDimensions( type ); // getArrayDimensions is not longer going to be used, mightjust have to use a toString method.
-		case "ClassOrInterfaceType":
+		case "TypeContext":
+			return processType( getTokens(type)[0] );			
+		case "PrimitiveTypeContext": 
+			return getTokens(type)[0].toString();
+		case "FunctionTypeContext":
+			contexts = getTokens(type);
+			return processType(contexts[1]) + " => " + processType(contexts[3]);			
+		case "ReferenceTypeContext": 
+			return  processType(getTokens(type)[0]);//processType( getContexts(type)[0] ) //+ getArrayDimensions( type ); // getArrayDimensions is not longer going to be used, mightjust have to use a toString method.
+		case "ClassOrInterfaceTypeContext":
 			sb = new StringBuilder();
-			for( Object context : getContexts(type) )
-				if( context.getClass().getSimpleName().equals("ClassOrInterfaceTypeSuffix"))
+			for( Object context : getTokens(type) )
+				if( context.getClass().getSimpleName().equals("ClassOrInterfaceTypeSuffixContext"))
 					if( first )
 					{
 						sb.append(processType(context));
@@ -317,59 +355,71 @@ public class ShadowCompilerInterface
 						sb.append(":").append(processType(context));
 						
 			return sb.toString();
-		case "ClassOrInterfaceTypeSuffix":
-			contexts = getContextChildren(type); //getContexts(type);
+		case "ClassOrInterfaceTypeSuffixContext":
+			contexts = getTokens(type); //getContexts(type); // changed
 			if( contexts.length > 1 )
 				return contexts[0].toString() + processType( contexts[1] );
 			else
 				return contexts[0].toString();
-		case "TypeArguments":
-		case "TypeParameters":
+		case "TypeArgumentsContext":
+		case "TypeParametersContext":
 			sb = new StringBuilder("<");
-			for( Object context : getContexts(type) )
-				if( first )
+			for( Object context : getTokens(type) ) // do debuging here, store all tokens
+			{
+				if(this.contextClass.isInstance(context))
 				{
-					sb.append(processType(context));
-					first = false;
+					if( first )
+					{
+						sb.append(processType(context));
+						first = false;
+					}
+					else
+						sb.append(",").append(processType(context));
 				}
-				else
-					sb.append(",").append(processType(context));
+			}
 			sb.append(">");
 			return sb.toString();
-		case "TypeParameter":
-			contexts = getContextChildren(type);
+		case "TypeParameterContext":
+			contexts = getTokens(type); // changed
 			if( contexts.length > 1 )
 				return contexts[0].toString() + " " + processType(contexts[1]);
 			else
 				return contexts[0].toString();
-		case "IsList":
+		case "IsListContext":
 			sb = new StringBuilder("is ");
-			for( Object context : getContexts(type) )
-				if( first )
+			for( Object context : getTokens(type) )
+				if(this.contextClass.isInstance(context))
 				{
-					sb.append(processType(context));
-					first = false;
+					if( first )
+					{
+						sb.append(processType(context));
+						first = false;
+					}
+					else
+						sb.append(" and ").append(processType(context));
 				}
-				else
-					sb.append(" and ").append(processType(context));	
 			return sb.toString();
-		case "ResultTypes":
-		case "FormalParameters":
+		case "ResultTypesContext":
+		case "FormalParametersContext":
 			sb = new StringBuilder("(");
-			for( Object context : getContexts(type) )
-				if( first )
-				{
-					sb.append(processType(context));
-					first = false;
+			for( Object context : getTokens(type) )
+			{								
+				if ( contextClass.isInstance(context)){
+					if( first )
+					{
+						sb.append(processType(context));
+						first = false;
+					}
+					else
+						sb.append(",").append(processType(context));
 				}
-				else
-					sb.append(",").append(processType(context));
+			}
 			sb.append(")");
 			return sb.toString();
-		case "ResultType":
-		case "FormalParameter":
-			contexts = getContexts(type);
-			return contexts[0].toString() + processType(contexts[1]);
+		case "ResultTypeContext":
+		case "FormalParameterContext":
+			contexts = getTokens(type);			
+			return getModifiers(contexts[0]) + processType(contexts[1]);
 		}
 		
 		return "";
@@ -383,14 +433,13 @@ public class ShadowCompilerInterface
 		Tree tree = null; 
 		Class<? extends Object> elementClass = element.getClass(); 
 		ArrayList<Tree> children = new ArrayList<Tree>();
-		Object[] contexts = getContexts(element);	
+		Object[] contexts = getTokens(element);	
 		
 		String modifiers;
 		String kind;
 		String type;
 
-		String temp = elementClass.getSimpleName();
-		
+		String temp = elementClass.getSimpleName();		
 		switch( elementClass.getSimpleName() )
 		{
 		case "CompilationUnitContext": 
@@ -398,11 +447,13 @@ public class ShadowCompilerInterface
 			for( Object context : contexts )
 			{
 				String name = context.getClass().getSimpleName();
-				if( name.equals("ClassOrInterfaceDeclaration") || name.equals("EnumDeclaration") )
-				{	 
-					for( Object detail :  getContexts(context) )
+				if( name.equals("ClassOrInterfaceDeclarationContext") || name.equals("EnumDeclarationContext") )
+				{
+					Object[] tempDeclaration = getTokens(context);
+					
+					for( Object detail :  getTokens(context) )
 					{
-						if( detail.getClass().getSimpleName().equals("UnqualifiedName") )
+						if( detail.getClass().getSimpleName().equals("UnqualifiedNameContext") )
 						{
 							children.add(new Tree(detail, tree, ShadowLabel.PACKAGE));
 							break;
@@ -413,21 +464,27 @@ public class ShadowCompilerInterface
 				}
 			}
 			break;		 
-		case "ClassOrInterfaceDeclarationContext": // Professor Wittman said that antler removed the need for this.
+		case "ClassOrInterfaceDeclarationContext": 
 			
 			String typeParameters = "";
-			for( Object node : contexts )
-				if( node.getClass().getSimpleName().equals("TypeParametersContext") )
-					typeParameters = processType(node);
+			// It seems like the names are not being interpreted here.
+			// For the HelloWorld program, contexts has values [ class, HelloWorld, [294, 241] ]
+			for( Object context : contexts )
+			{
+				String temp2 = context.getClass().getSimpleName();
+				if( context.getClass().getSimpleName().equals("TypeParametersContext") )
+					typeParameters = processType(context);
+			}
+						
 			
-			kind = getContextChildren(element)[0].toString();
+			kind = getTokens(element)[0].toString();
 			if( kind.contains("singleton"))
 				tree = new Tree(element, parent, typeParameters, ShadowLabel.SINGLETON);
 			else if( kind.contains("exception"))
 				tree = new Tree(element, parent, typeParameters, ShadowLabel.EXCEPTION);
 			else if( kind.contains("interface"))
 				tree = new Tree(element, parent, typeParameters, ShadowLabel.INTERFACE);
-			else
+			else // [Working]
 				tree = new Tree(element, parent, typeParameters, ShadowLabel.CLASS);
 			
 			for( Object node : contexts )
@@ -435,9 +492,10 @@ public class ShadowCompilerInterface
 				String name = node.getClass().getSimpleName();
 				if( name.equals("ClassOrInterfaceBodyContext") )
 				{
-					Object[] declarations = getContexts(node);
+					Object[] declarations = getTokens(node);
 					for( Object declaration : declarations )
-						bodyDeclaration(declaration, tree, children);		
+						if(this.contextClass.isInstance(declaration))
+							bodyDeclaration(declaration, tree, children);		
 				}
 			}
 			break;
@@ -448,7 +506,7 @@ public class ShadowCompilerInterface
 				String name = context.getClass().getSimpleName();
 				if( name.equals("EnumBodyContext") )
 				{
-					Object[] declarations = getContexts(context);
+					Object[] declarations = getTokens(context);
 					for( Object declaration : declarations )
 					{
 						if( declaration.getClass().getSimpleName().equals("EnumConstantContext"))
@@ -477,13 +535,15 @@ public class ShadowCompilerInterface
 			
 			if(elementClass.getSimpleName().equals("MethodDeclaratorContext"))
 			{
-				type = processType(contexts[0]) + " => " + processType(contexts[1]); 
+				// [1] and [3]
+				type = processType(contexts[1]) + " => " + processType(contexts[3]); 
 				modifiers = getModifiers(getParent(element));
 			}
 			else if( elementClass.getSimpleName().equals("CreateDeclarationContext") )
 			{
-				type = processType(getContexts(contexts[0])[0]);
-				modifiers = getModifiers(element);				
+				type = processType(getTokens(contexts[0])[1]); 
+				modifiers = getModifiers(element);
+				element = contexts[0];
 			}
 			else
 				modifiers = getModifiers(element);
@@ -608,7 +668,7 @@ public class ShadowCompilerInterface
 	}*/
 
 	// Is used multiple times [checked 1.0]
-	private Object[] getContexts(Object context)
+	private Object[] getTokens(Object context)
 	{
 		// this.contextClass()
 		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
@@ -635,7 +695,7 @@ public class ShadowCompilerInterface
 	}
 		
 	// Is used multiple times [checked 1.0]
-	private Object[] getContextChildren(Object context)
+	/*private Object[] getContexts(Object context)
 	{
 		// this.contextClass()
 		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
@@ -651,7 +711,7 @@ public class ShadowCompilerInterface
 				for (int i = 0; i < numChildren; i++) {
 					Object child = this.contextClass.getMethod("getChild", new Class[] { Integer.TYPE }).invoke(context, new Object[] { Integer.valueOf(i) });
 					
-					if(this.contextClass.isInstance(context))
+					if(this.contextClass.isInstance(child))
 					{
 						contexts.add(child);
 					}
@@ -666,7 +726,7 @@ public class ShadowCompilerInterface
 		}
 		
 		return new Object[0];
-	}
+	}*/
 	
 	// Used in a method that is not used
 	/*public Object[] getChildren(Object element)
