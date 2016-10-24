@@ -1,5 +1,7 @@
 package shadow.plugin;
 
+import javax.swing.JOptionPane;
+
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -62,7 +64,7 @@ public class ShadowPlugin
   }
   
   public ShadowCompilerInterface getCompilerInterface()
-  {
+  { 	 
     if (this.compilerInterface == null) {
       this.compilerInterface = new ShadowCompilerInterface();
     }
