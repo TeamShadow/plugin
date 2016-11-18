@@ -20,6 +20,13 @@
       </editor>
    </extension>
    <extension
+   		point = "org.eclipse.core.filebuffers.annotationModelCreation">
+   		<factory
+   			extensions="*"
+   			class="org.eclipse.ui.texteditor.ResourceMarkerAnnotationModelFactory">
+   		</factory>
+   </extension>
+   <extension
       point = "org.eclipse.ui.preferencePages">
        <page
             class="shadow.plugin.preferences.PreferencePage"
@@ -27,4 +34,13 @@
             name="Shadow">
       </page>
    </extension>
+   <extension 
+   		id="problemmarker"
+   		point="org.eclipse.core.resources.markers"
+   		name="error">
+   		<persistent value="true" />
+   		<attribute name="severity" />
+   		<attribute name="message" />
+   		<attribute name="location" />
+   	</extension>
 </plugin>
