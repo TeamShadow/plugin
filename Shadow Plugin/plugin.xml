@@ -2,12 +2,14 @@
 <?eclipse version="4.5"?>
 <plugin>
 	<extension
-         point="org.eclipse.core.filebuffers.documentSetup">
+       name="org.eclipse.debug.core.launchConfigurationTypes"
+       point="org.eclipse.core.filebuffers.documentSetup">
       <participant
             class="shadow.plugin.editor.ShadowDocumentSetupParticipant"
             extensions="shadow">
       </participant>
    </extension>
+   
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -34,6 +36,131 @@
             name="Shadow">
       </page>
    </extension>
+   <extension
+   		point = "org.eclipse.ui.console.consoleFactories">
+   		<consoleFactory
+   			class = "shadow.plugin.launcher.ConsoleFactory"
+   			icon = ""
+   			label = "My Console"
+   			>
+   		</consoleFactory>
+   	</extension>
+   
+   
+   
+   
+   <extension 
+   		point = "org.eclipse.debug.core.launchConfigurationTypes">
+   		<launchConfigurationType
+   				id = "org.shadow-language.launchConfigurationType"
+   				name = "Shadow Application"   				
+   				delegate = "shadow.plugin.launcher.ShadowLauncher"
+   				modes = "run">
+   		</launchConfigurationType>
+   </extension>
+   
+   
+   <extension
+   		point = "org.eclipse.debug.ui.launchConfigurationTabGroups">
+   		<launchConfigurationTabGroup
+   			id = "org.shadow-language.basicLaunchTabGroup"
+   			type = "org.shadow-language.launchConfigurationType"
+   			class = "shadow.plugin.launcher.ShadowTabGroup"> <!--was ShadowLaunchTabGroup -->
+   		</launchConfigurationTabGroup>
+   	</extension>
+   
+   <!--
+   <extension
+   		point = "org.eclipse.debug.ui.launchConfigurationTypeImages">
+   		<launchConfigurationTypeImage
+   			id = ""
+   			configTypeID = ""
+   			icon = "">
+   		</launchConfigurationTypeImage>
+   	</extension>
+   -->
+   
+   <!--
+   <extension 
+   		point = "org.eclipse.debug.core.launchDelegates">
+   			<launchDelegate
+   				id = "org.shadow-language.launchProfileDelegate"
+   				delegate = "shadow.plugin.launcher.ShadowLauncher">
+   			</launchDelegate>
+   			
+   			<modeCombination
+   				modes = "run"
+   				perspective = "">
+   			</modeCombination>
+   			
+   	</extension>
+   -->
+   
+   
+   
+   <extension
+	    point="org.eclipse.debug.ui.launchShortcuts">
+	    <shortcut
+	        class="shadow.plugin.launcher.ShadowLaunchShortcut"
+	        icon=""
+	        id="org.shadow-language.shadowShortCut"
+	        label="Shadow Shortcut"
+	        modes="run">
+	        <contextualLaunch>
+	            <enablement>
+	                <with
+	                    variable="selection">
+	                    <count
+	                        value="+">
+	                    </count>
+	                </with>
+	            </enablement>
+	        </contextualLaunch>
+	    </shortcut>
+	</extension>
+   
+   
+   
+   <!--
+   <extension point="org.eclipse.debug.ui.launchShortcuts">
+   		<shortcut
+   				class = "org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut"
+   				description = ""
+   				helpContextId = "org.eclipse.jdt.debug.ui.shortcut_local_java_application"
+   				icon = "$nl$/icons/full/etool16/java_app.gif"
+   				id = "org.eclipse.jdt.debug.ui.localJavaShortcut"
+   				label = "%JavaApplicationShortcut.label"
+   				modes = "run">
+   			<contextualLaunch>
+   				<enablement>
+   					<with variable = "selection">
+   						<count value = "1"/>
+   						 <iterate>
+   						  <and>
+   						   <adapt type = "org.eclipse.jdt.core.IJavaElement">
+   						   		<test property = "org.eclipse.jdt.core.isInJavaProject"/>
+   						   	</adapt>
+   						   	<or>
+   						   		<test property="org.eclipse.jdt.launching.hasMain"/>
+   						   	</or>
+   						   </and>
+   						  </iterate>
+   					</with>
+   				</enablement>
+   			</contextualLaunch>   			
+   			<configurationType
+   				id = "org.shadow-language.launchConfigurationType">
+   			</configurationType>	
+   			<description
+   				description = "Compiles and runs shadow programs."
+   				mode = "run">
+   			</description>
+   		</shortcut>
+   </extension>
+   -->
+   
+      
+      
    <extension 
    		id="problemmarker"
    		point="org.eclipse.core.resources.markers"
@@ -43,4 +170,10 @@
    		<attribute name="message" />
    		<attribute name="location" />
    	</extension>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.launchModes">
+   </extension>
 </plugin>
