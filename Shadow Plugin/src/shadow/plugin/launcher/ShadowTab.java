@@ -46,7 +46,7 @@ public class ShadowTab extends AbstractLaunchConfigurationTab //implements ILaun
                     String consoleText = configuration.getAttribute(ShadowLaunchConfigurationAttributes.CONFIG_FILE_LOCATION,
                                     "");
                     
-                    IFile file = configuration.getFile();
+                    //IFile file = configuration.getFile();
                     
                     text.setText(consoleText);
             } catch (CoreException e) {

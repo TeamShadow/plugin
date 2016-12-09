@@ -1,11 +1,13 @@
 package shadow.plugin.launcher;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
@@ -25,6 +27,11 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.MessageConsole;
+import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.ShadowPlugin;
@@ -128,11 +135,7 @@ public class ShadowLauncher extends LaunchConfigurationDelegate {
 		System.out.println("launching2");
 	}
 
-	public static void setConsole(PrintStream ps)
-	{
-		System.setOut(ps);
-		System.setErr(ps);
-	}
+	
 
 
 }
