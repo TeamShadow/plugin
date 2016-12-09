@@ -578,6 +578,12 @@ public class ShadowCompilerInterface
 					}
 					catch (InvocationTargetException ex)
 					{
+						/*
+						 * TODO: There is a problem with setting the parse and type errors. Some parser errors do no show up, such as
+						 * as a missing closing brace of a method or class. The appropriate error used to be returned, but it currently
+						 * returns null pointer exception. Also, the type check errors tend to only appear upon the first time a file is
+						 * brought into scope. The errors that were already highlighted stopped appearing upon being saved reprocessed. 
+						 */
 						
 						String problem = ex.getCause().toString();
 						// There are issues with the displaying missing closing parenthesis error 
@@ -679,7 +685,7 @@ public class ShadowCompilerInterface
 			MarkerUtilities.setCharStart(attrs, startCharacter);			
 			
 			if(startCharacter == stopCharacter)
-				stopCharacter = stopCharacter + 1;
+				stopCharacter = stopCharacter + 2;
 			 
 			MarkerUtilities.setCharEnd(attrs, stopCharacter);
 			

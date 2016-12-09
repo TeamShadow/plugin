@@ -1,6 +1,7 @@
 package shadow.plugin.launcher;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
@@ -13,10 +14,25 @@ import org.eclipse.ui.console.MessageConsoleStream;
 
 public class ShadowLauncherUtil {
 
+	private static PrintStream originalOutStream;
+	private static PrintStream originalErrStream;
+	private static InputStream originalInStream;
+	
+	
 	public static void setConsole(PrintStream ps)
 	{
+		originalOutStream = System.out;
+		originalErrStream = System.err;
+		originalInStream = System.in;
+		
 		System.setOut(ps);		
 		System.setErr(ps);
+	}
+	
+	public static void resetConsole()
+	{
+		System.setOut(originalOutStream);
+		System.setErr(originalErrStream);
 	}
 	
 	public CommandPromptOutput runProcess(ArrayList<String> inputArgs) throws IOException, InterruptedException
@@ -34,7 +50,7 @@ public class ShadowLauncherUtil {
 
 		if(console == null)
 		{
-			console = new MessageConsole("My Console", null);
+			console = new MessageConsole(name, null);
 			console.activate();
 		}
 		//no console found, so create a new one
@@ -54,20 +70,22 @@ public class ShadowLauncherUtil {
 		StringBuilder stdout = commandExecutor.getStandardOutputFromCommand();
 		StringBuilder stderr = commandExecutor.getStandardErrorFromCommand();
 
-		CommandPromptOutput results = new CommandPromptOutput(stdout, stderr);		
+		CommandPromptOutput results = new CommandPromptOutput(stdout, stderr, result);		
 		
 		return results;
 	}
 	
-	public class CommandPromptOutput
+	public static class CommandPromptOutput
 	{
 		private StringBuilder stdout;
 		private StringBuilder stderr;
+		private int status;
 		
-		public CommandPromptOutput(StringBuilder stdout, StringBuilder stderr)
+		public CommandPromptOutput(StringBuilder stdout, StringBuilder stderr, int status)
 		{
 			this.stdout = stdout;
 			this.stderr = stderr;
+			this.status = status;
 		}
 		
 		public StringBuilder getStdout()
@@ -78,6 +96,11 @@ public class ShadowLauncherUtil {
 		public StringBuilder getStderr()
 		{
 			return this.stderr;
+		}
+		
+		public int getStatus()
+		{
+			return this.status;
 		}
 		
 	}

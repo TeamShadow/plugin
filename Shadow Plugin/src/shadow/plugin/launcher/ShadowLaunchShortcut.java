@@ -51,33 +51,51 @@ public class ShadowLaunchShortcut implements ILaunchShortcut {
 				inputArgs.add(pathName);
 
 				try {
-					
+
 					ShadowLauncherUtil launchProcesses = new ShadowLauncherUtil(); 
 					CommandPromptOutput results = launchProcesses.runProcess(inputArgs);					
-					
-					if(results.getStderr() != null && results.getStderr().toString() != "")
+
+					if(results.getStatus() == 0)
 					{
 						/* TODO: The execution of .exe files are only proven to work on Windows machines.
 						 * Editions need to be made to make sure that they run on Linux and Mac.
-						*/ 
-						IPath executableFile = path.removeFileExtension().addFileExtension("exe");
+						 */ 
+
+						ShadowLauncherUtil.resetConsole();
 						
+						IPath executableFile; 
+
+
+						String osName = System.getProperty("os.name").toLowerCase();
 						inputArgs = new ArrayList<String>();
-						inputArgs.add(executableFile.toString());
-						
+
+
+						if(osName.contains("windows"))
+						{
+							executableFile = path.removeFileExtension().addFileExtension("exe");
+							inputArgs.add(executableFile.toString());
+						}
+						else
+						{
+							executableFile = path.removeFileExtension();
+							inputArgs.add("./" + executableFile.toString());
+						}		
+
 						results = launchProcesses.runProcess(inputArgs);
 
 						System.out.println("STDOUT:");
 						System.out.println(results.getStdout());
 						System.out.println("STDERR:");
-						System.out.println(results.getStderr());
-						
+						System.err.println(results.getStderr());
+
 					}
 					else
 					{
-						System.out.println("STDERR:");
-						System.out.println(results.getStderr().toString());
-					}							
+						System.err.println("STDERR:");
+						System.err.println(results.getStderr());
+					}
+
+					ShadowLauncherUtil.resetConsole();
 
 				} catch (IOException e)
 				{
