@@ -1,11 +1,14 @@
 package shadow.plugin.outline;
 
-import java.io.FileInputStream;
-import java.nio.file.Path;
-
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPathEditorInput;
+import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.compiler.ShadowCompilerInterface;
@@ -26,11 +29,12 @@ public class ShadowContentProvider
   {
     this.root = null;
     try
-    {
-      Path path = ((IPathEditorInput)newInput).getPath().toFile().toPath();
-      this.root = this.compiler.compile(path);
-    }
-    catch (Exception localException) {}   
+    {    	
+    	IFileEditorInput inputFile = (IFileEditorInput)newInput;
+
+    	this.root = this.compiler.compile((FileEditorInput) newInput);
+    } catch (Exception localException) {}
+ 
   }
   
   public Object[] getElements(Object input)
