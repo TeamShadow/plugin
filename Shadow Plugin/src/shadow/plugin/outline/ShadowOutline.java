@@ -27,7 +27,7 @@ extends ContentOutlinePage
 	public ShadowOutline(ITextEditor textEditor)
 	{
 		this.editor = textEditor;
-		update();
+		update();		
 	}
 
 	public void createControl(Composite parent)

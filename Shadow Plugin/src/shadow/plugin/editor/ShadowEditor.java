@@ -47,7 +47,8 @@ public class ShadowEditor
   {
     super.doSave(monitor);
     if (this.outline != null) {
-      this.outline.update();
+    	this.outline.setSelection(null);
+    	this.outline.update();
     }
   }
   

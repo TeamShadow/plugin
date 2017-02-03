@@ -1,7 +1,5 @@
 package shadow.plugin;
 
-import javax.swing.JOptionPane;
-
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
