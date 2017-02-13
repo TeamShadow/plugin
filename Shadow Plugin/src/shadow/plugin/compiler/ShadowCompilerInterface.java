@@ -1,7 +1,5 @@
 package shadow.plugin.compiler;
 
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -27,10 +25,11 @@ import shadow.plugin.ShadowPlugin;
 import shadow.plugin.outline.ShadowLabel;
 
 
-public class ShadowCompilerInterface
-{	
-	private Class<?> mainClass;
-	private Class<?> contextClass; 
+public class ShadowCompilerInterface {
+	
+	private Class<?> contextClass;
+	private Class<?> tokenInterface;
+	private Class<?> terminalInterface;
 	private Class<?> shadowParserClass;
 	private Class<?> parseCheckerClass;	
 	private Class<?> loggersClass;  
@@ -41,58 +40,60 @@ public class ShadowCompilerInterface
 	private int errorLine;
 	private int errorColumn;
 	private String message = null;
-	private int newLineOffSet = 2;
-	
-	private int lineCount = 0; 
-	private int offSet = 0;
 
-	public ShadowCompilerInterface()
-	{
-		try
-		{
+	private Method lineStartMethod;
+	private Method lineEndMethod;
+	private Method columnStartMethod;
+	private Method columnEndMethod;
+	private Method startCharacterMethod;
+	private Method stopCharacterMethod;
+
+	public ShadowCompilerInterface() {		
+		try {						
 			IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
 					.getPreferenceStore();
 			String pathToJar = preferenceStore.getString("PATH");			
 
 			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };			
 
-			URLClassLoader loader = URLClassLoader.newInstance(urls);			
+			URLClassLoader loader = URLClassLoader.newInstance(urls);
 
-			this.mainClass = loader.loadClass("shadow.Main");
 			this.shadowParserClass = loader.loadClass("shadow.parse.ShadowParser");  
-			this.contextClass = loader.loadClass("shadow.parse.Context"); 			
+			this.contextClass = loader.loadClass("shadow.parse.Context"); 	
+			this.terminalInterface = loader.loadClass("org.antlr.v4.runtime.tree.TerminalNode");
+			this.tokenInterface = loader.loadClass("org.antlr.v4.runtime.Token");
 			this.loggersClass = loader.loadClass("shadow.Loggers");
 			this.errorReporterClass = loader.loadClass("shadow.typecheck.ErrorReporter");
 			this.parseCheckerClass = loader.loadClass("shadow.parse.ParseChecker");
 			this.shadowExceptionClass = loader.loadClass("shadow.ShadowException");
 			this.typeCheckerClass = loader.loadClass("shadow.typecheck.TypeChecker");
-			this.configurationClass = loader.loadClass("shadow.Configuration");
-			
+			this.configurationClass = loader.loadClass("shadow.Configuration");	
 
+			lineStartMethod = this.shadowExceptionClass.getMethod("lineStart");
+			lineEndMethod = this.shadowExceptionClass.getMethod("lineEnd");
+			columnStartMethod = this.shadowExceptionClass.getMethod("columnStart");
+			columnEndMethod = this.shadowExceptionClass.getMethod("columnEnd");
+			startCharacterMethod = this.shadowExceptionClass.getMethod("startCharacter");
+			stopCharacterMethod = this.shadowExceptionClass.getMethod("stopCharacter");
 		}
-		catch (ClassNotFoundException | MalformedURLException e)
-		{			
+		catch (ClassNotFoundException | MalformedURLException | NoSuchMethodException | SecurityException e) {			
 			this.shadowParserClass = (this.contextClass = null);
 		}
 	}
 
-	public int getErrorLine()
-	{
+	public int getErrorLine() {
 		return this.errorLine;
 	}
 
-	public int getErrorColumn()
-	{
+	public int getErrorColumn() {
 		return this.errorColumn;
 	}
 
-	public String getMessage()
-	{
+	public String getMessage() {
 		return message;
 	}	
 
-	public class Tree
-	{  
+	public class Tree {  
 		private Object node;
 		private Tree[] children;
 		private Tree parent;
@@ -100,13 +101,11 @@ public class ShadowCompilerInterface
 		private String name;
 		private String extra;
 
-		public Tree(Object node, Tree parent, ShadowLabel label)
-		{
+		public Tree(Object node, Tree parent, ShadowLabel label) {
 			this(node, parent, "", label);
 		}
 
-		public Tree(Object node, Tree parent, String extra, ShadowLabel label)
-		{
+		public Tree(Object node, Tree parent, String extra, ShadowLabel label) {
 			this.node = node;
 			this.parent = parent;
 			this.label = label;	
@@ -115,58 +114,47 @@ public class ShadowCompilerInterface
 			Object[] tokens = getTokens(node);
 
 			if(label == ShadowLabel.CLASS || label == ShadowLabel.SINGLETON
-					|| label == ShadowLabel.EXCEPTION || label == ShadowLabel.INTERFACE)
-			{				
+					|| label == ShadowLabel.EXCEPTION || label == ShadowLabel.INTERFACE) {				
 				if(checkForPackage(tokens))
 					this.name = tokens[3].toString();
 				else
 					this.name = tokens[1].toString();
 			}
-			else if(label == ShadowLabel.PACKAGE)
-			{
+			else if(label == ShadowLabel.PACKAGE) {
 				StringBuilder sb = new StringBuilder();
-				for(int i = 0; i < tokens.length; i++)
-				{
-					sb.append(tokens[i].toString());
-				}
+				for(int i = 0; i < tokens.length; i++)				
+					sb.append(tokens[i].toString());				
 				this.name = sb.toString();
 			}
 			else
 				this.name = tokens[0].toString();
 		}
 
-		private boolean checkForPackage(Object[] tokens)
-		{
+		private boolean checkForPackage(Object[] tokens) {
 			if(tokens.length >= 4 && tokens[2].toString().equals("@"))
 				return true;
 
 			return false;
 		}
 
-		public void setChildren(Tree[] children)
-		{
+		public void setChildren(Tree[] children) {
 			this.children = children;		  
 		}
 
-		public Tree[] getChildren() 
-		{
+		public Tree[] getChildren() {
 			return children;
 		}
 
-		public boolean hasChildren()
-		{
+		public boolean hasChildren() {
 			return children != null && children.length > 0;			
 		}
 
-		public Tree getParent() 
-		{
+		public Tree getParent() {
 			return parent;
 		}
 
-		public String toString()
-		{
-			if( extra != null && !extra.isEmpty() )
-			{
+		public String toString() {
+			if( extra != null && !extra.isEmpty() ) {
 				if( label == ShadowLabel.FIELD || label == ShadowLabel.CONSTANT ) 
 					return name + ": " + extra;
 
@@ -177,10 +165,8 @@ public class ShadowCompilerInterface
 			return name;
 		}
 
-		public StyledString toStyledString()
-		{
-			if( extra != null && !extra.isEmpty() )
-			{
+		public StyledString toStyledString() {
+			if( extra != null && !extra.isEmpty() ) {
 				if( label == ShadowLabel.FIELD || label == ShadowLabel.CONSTANT ) 
 					return new StyledString(name).append( ": " + extra, StyledString.DECORATIONS_STYLER);
 
@@ -191,37 +177,29 @@ public class ShadowCompilerInterface
 			return new StyledString(name);
 		}
 
-
-		public Object getNode()
-		{
+		public Object getNode() {
 			return node;
 		}
 
-		public ShadowLabel getLabel()
-		{
+		public ShadowLabel getLabel() {
 			return label;			
 		}
 
-		public void setLabel(ShadowLabel label)
-		{
+		public void setLabel(ShadowLabel label) {
 			this.label = label;
 		}
 
-		public int getLength()
-		{
+		public int getLength() {
 			return name.length();
 		}
 	}	
 
-	private Object getParent(Object context)
-	{
+	private Object getParent(Object context) {
 		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
-			try
-			{
+			try {
 				return this.contextClass.getMethod("getParent", new Class[0]).invoke(context, new Object[0]);
 			}
-			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
-			{
+			catch (InvocationTargetException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException ex) {
 				ex.printStackTrace();
 			}
 		}
@@ -229,8 +207,7 @@ public class ShadowCompilerInterface
 		return context;
 	}	
 
-	private String getType(Object element)
-	{
+	private String getType(Object element) {
 		for(Object tokens : getTokens(element) ) 
 			if( tokens.getClass().getSimpleName().equals("TypeContext"))
 				return processType(tokens);
@@ -238,16 +215,13 @@ public class ShadowCompilerInterface
 		return "";
 	}
 
-	private String getModifiers(Object context)
-	{
+	private String getModifiers(Object context) {
 		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
-			try
-			{
+			try {
 				Object modifiers = this.contextClass.getMethod("getModifiers", new Class[0]).invoke(context, new Object[0]);
 				return modifiers.toString();
 			}
-			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
-			{
+			catch (InvocationTargetException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException ex ) {
 				ex.printStackTrace();
 			}
 		}
@@ -255,8 +229,7 @@ public class ShadowCompilerInterface
 		return "";
 	}
 
-	private void bodyDeclaration(Object declaration, Tree tree, ArrayList<Tree> children)
-	{
+	private void bodyDeclaration(Object declaration, Tree tree, ArrayList<Tree> children) {
 		//element 0 is modifiers, element 1 is declarator
 		Object[] modifierAndDeclarator = getTokens(declaration);
 		Object declarator = modifierAndDeclarator[1];		
@@ -274,16 +247,14 @@ public class ShadowCompilerInterface
 			children.add(buildTree(declarator, tree));
 	}
 
-	private String processType( Object type )
-	{		
+	private String processType( Object type ) {		
 		Object[] tokens;
 		StringBuilder sb;
 		boolean first = true;
 
 		Class<? extends Object> typeClass = type.getClass();
 
-		switch( typeClass.getSimpleName() ) 
-		{
+		switch( typeClass.getSimpleName() ) {
 		case "TypeContext":
 			return processType( getTokens(type)[0] );			
 		case "PrimitiveTypeContext": 
@@ -297,8 +268,7 @@ public class ShadowCompilerInterface
 			sb = new StringBuilder();
 			for( Object token : getTokens(type) )
 				if( token.getClass().getSimpleName().equals("ClassOrInterfaceTypeSuffixContext"))
-					if( first )
-					{
+					if( first ) {
 						sb.append(processType(token));
 						first = false;
 					}	
@@ -315,12 +285,9 @@ public class ShadowCompilerInterface
 		case "TypeArgumentsContext":
 		case "TypeParametersContext":
 			sb = new StringBuilder("<");
-			for( Object token : getTokens(type) ) 
-			{
-				if(this.contextClass.isInstance(token))
-				{
-					if( first )
-					{
+			for( Object token : getTokens(type) ) {
+				if(contextClass.isInstance(token)) {
+					if( first ) {
 						sb.append(processType(token));
 						first = false;
 					}
@@ -339,10 +306,8 @@ public class ShadowCompilerInterface
 		case "IsListContext":
 			sb = new StringBuilder("is ");
 			for( Object token : getTokens(type) )
-				if(this.contextClass.isInstance(token))
-				{
-					if( first )
-					{
+				if(this.contextClass.isInstance(token)) {
+					if( first ) {
 						sb.append(processType(token));
 						first = false;
 					}
@@ -353,11 +318,9 @@ public class ShadowCompilerInterface
 		case "ResultTypesContext":
 		case "FormalParametersContext":
 			sb = new StringBuilder("(");
-			for( Object token : getTokens(type) )
-			{								
+			for( Object token : getTokens(type) ) {								
 				if ( contextClass.isInstance(token)){
-					if( first )
-					{
+					if( first ) {
 						sb.append(processType(token));
 						first = false;
 					}
@@ -376,8 +339,7 @@ public class ShadowCompilerInterface
 		return "";
 	}
 
-	private Tree buildTree(Object element, Tree parent)
-	{
+	private Tree buildTree(Object element, Tree parent) {
 		Tree tree = null; 
 		Class<? extends Object> elementClass = element.getClass(); 
 		ArrayList<Tree> children = new ArrayList<Tree>();
@@ -387,19 +349,14 @@ public class ShadowCompilerInterface
 		String kind;
 		String type;
 
-		switch( elementClass.getSimpleName() )
-		{
+		switch( elementClass.getSimpleName() ) {
 		case "CompilationUnitContext": 
 			tree = new Tree(element, parent, ShadowLabel.COMPILATION_UNIT);
-			for( Object token : tokens )
-			{
+			for( Object token : tokens ) {
 				String name = token.getClass().getSimpleName();
-				if( name.equals("ClassOrInterfaceDeclarationContext") || name.equals("EnumDeclarationContext") )
-				{
-					for( Object detail :  getTokens(token) )
-					{
-						if( detail.getClass().getSimpleName().equals("UnqualifiedNameContext") )
-						{
+				if( name.equals("ClassOrInterfaceDeclarationContext") || name.equals("EnumDeclarationContext") ) {
+					for( Object detail :  getTokens(token) ) {
+						if( detail.getClass().getSimpleName().equals("UnqualifiedNameContext") ) {
 							children.add(new Tree(detail, tree, ShadowLabel.PACKAGE));
 							break;
 						}						
@@ -412,8 +369,7 @@ public class ShadowCompilerInterface
 		case "ClassOrInterfaceDeclarationContext": 
 
 			String typeParameters = "";
-			for( Object token : tokens )
-			{
+			for( Object token : tokens ) {
 				if( token.getClass().getSimpleName().equals("TypeParametersContext") )
 					typeParameters = processType(token);
 			}
@@ -429,11 +385,9 @@ public class ShadowCompilerInterface
 			else // [Working]
 				tree = new Tree(element, parent, typeParameters, ShadowLabel.CLASS);
 
-			for( Object token : tokens )
-			{
+			for( Object token : tokens ) {
 				String name = token.getClass().getSimpleName();
-				if( name.equals("ClassOrInterfaceBodyContext") )
-				{					
+				if( name.equals("ClassOrInterfaceBodyContext") ) {					
 					for( Object declaration : getTokens(token) )
 						if(this.contextClass.isInstance(declaration))
 							bodyDeclaration(declaration, tree, children);		
@@ -442,11 +396,9 @@ public class ShadowCompilerInterface
 			break;
 		case "EnumDeclarationContext": 
 			tree = new Tree(element, parent, ShadowLabel.ENUM);
-			for( Object token : tokens )
-			{
+			for( Object token : tokens ) {
 				String name = token.getClass().getSimpleName();
-				if( name.equals("EnumBodyContext") )
-				{
+				if( name.equals("EnumBodyContext") ) {
 					for( Object declaration : getTokens(token) )
 					{
 						if( declaration.getClass().getSimpleName().equals("EnumConstantContext"))
@@ -472,13 +424,11 @@ public class ShadowCompilerInterface
 		case "DestroyDeclarationContext":
 		case "MethodDeclaratorContext":
 			type = "";			
-			if(elementClass.getSimpleName().equals("MethodDeclaratorContext"))
-			{
+			if(elementClass.getSimpleName().equals("MethodDeclaratorContext")) {
 				type = processType(tokens[1]) + " => " + processType(tokens[3]); 
 				modifiers = getModifiers(getParent(element));
 			}
-			else if( elementClass.getSimpleName().equals("CreateDeclarationContext") )
-			{
+			else if( elementClass.getSimpleName().equals("CreateDeclarationContext") ) {
 				type = processType(getTokens(tokens[0])[1]); 
 				modifiers = getModifiers(element);
 				element = tokens[0];
@@ -500,15 +450,14 @@ public class ShadowCompilerInterface
 		return tree;
 	}
 
+	@SuppressWarnings("unchecked")
 	public Tree compile(FileEditorInput newInput)
 	{		
 		//IPath path = input.getPath();
 		Tree tree = null;
 		Path inputPath = newInput.getPath().toFile().toPath(); //path.toFile().toPath();
 		IFile inputIFile = newInput.getFile();
-		
-		
-		
+
 		// delete all of the existing IMarkers.
 		int depth = IResource.DEPTH_INFINITE;
 
@@ -518,25 +467,17 @@ public class ShadowCompilerInterface
 		Class<?> loggerClassType;
 		Object parseErrorReporter;
 		Object typeErrorReporter = null;
-		Object parseChecker;
-		Object typeChecker;
+		Object parseChecker;		
 		Object parseCheckerContext;
-		Method typeCheckerContexts;
-		List<Object> typeErrors;
-		
-		boolean typeErrorProcessing = false;
-		
+		Method typeCheckerContexts;		
+
 		this.errorLine = (this.errorColumn = 0);
 		this.message = null;
-		try
-		{
+		try {
 			inputIFile.deleteMarkers(null, true, depth);
 			if (this.shadowParserClass != null) {
-				try
-				{
-
-					logger = loggersClass.getField("PARSER");			    			    
-
+				try {
+					logger = loggersClass.getField("PARSER");
 					loggerValue = logger.get(null);
 
 					loggerClassType = logger.getType(); 			    
@@ -549,154 +490,107 @@ public class ShadowCompilerInterface
 
 					parseCheckerContext = null;				
 
-					try
-					{
+					try {
 						parseCheckerContext = this.parseCheckerClass.getMethod("getCompilationUnit", new Class[] { Path.class })
 								.invoke(parseChecker, new Object[] { inputPath });
-						
+
 						tree = buildTree(parseCheckerContext, null);
 
-						
-						typeErrorProcessing = true;
-						
-						String insight = inputPath.toString();
-						Object configuration = this.configurationClass.getMethod( "buildConfiguration",new Class[] {String.class, String.class, Boolean.TYPE}).invoke(null, new Object[] { inputPath.toString(), null, new Boolean(true)});
-						
+						this.configurationClass.getMethod( "buildConfiguration",new Class[] {String.class, String.class, Boolean.TYPE}).invoke(null, new Object[] { inputPath.toString(), null, new Boolean(true)});
+
 						logger = loggersClass.getField("TYPE_CHECKER");
 						loggerValue = logger.get(null);
 						loggerClassType = logger.getType();
-						
+
 						typeErrorReporter = this.errorReporterClass.getConstructor(new Class[] { loggerClassType })
 								.newInstance(new Object[] { loggerValue });
-						
-						//typeChecker = this.typeCheckerClass.getConstructor(null).newInstance(null);
+
 						typeCheckerContexts = this.typeCheckerClass.getMethod("typeCheck", new Class[] { Path.class, Boolean.TYPE, typeErrorReporter.getClass() });
-						
-						typeErrors = (List<Object>) typeCheckerContexts.invoke(null, new Object[] { inputPath, new Boolean(true), typeErrorReporter });
-						
-						
+
+						//stores errors and warnings into typeErrorReporter
+						typeCheckerContexts.invoke(null, new Object[] { inputPath, new Boolean(true), typeErrorReporter });
 					}
-					catch (InvocationTargetException ex)
-					{
-						/*
-						 * TODO: There is a problem with setting the parse and type errors. Some parser errors do no show up, such as
-						 * as a missing closing brace of a method or class. The appropriate error used to be returned, but it currently
-						 * returns null pointer exception. Also, the type check errors tend to only appear upon the first time a file is
-						 * brought into scope. The errors that were already highlighted stopped appearing upon being saved reprocessed. 
-						 */
-						
-						String problem = ex.getCause().toString();
-						// There are issues with the displaying missing closing parenthesis error 
-						
+					catch (InvocationTargetException ex) {	
 						List<Object> errorList;
 						List<Object> warningList;
-						
-						if(typeErrorProcessing)
-						{
-							errorList = (List<Object>) this.errorReporterClass.getMethod("getErrorList", null).invoke(typeErrorReporter, new Object[] {});
-							warningList = (List<Object>) this.errorReporterClass.getMethod("getWarningList", null).invoke(typeErrorReporter, new Object[] {});
-						}else
-						{
-							errorList = (List<Object>) this.errorReporterClass.getMethod("getErrorList", null).invoke(parseErrorReporter, new Object[] {});
-							warningList = (List<Object>) this.errorReporterClass.getMethod("getWarningList", null).invoke(parseErrorReporter, new Object[] {});
-						}
 
-						Method lineStartMethod = this.shadowExceptionClass.getMethod("lineStart", null);
-						Method lineEndMethod = this.shadowExceptionClass.getMethod("lineEnd", null);
-						Method columnStartMethod = this.shadowExceptionClass.getMethod("columnStart", null);
-						Method columnEndMethod = this.shadowExceptionClass.getMethod("columnEnd", null);
-						Method startCharacterMethod = this.shadowExceptionClass.getMethod("startCharacter", null);
-						Method stopCharacterMethod = this.shadowExceptionClass.getMethod("stopCharacter", null);
-						
-						lineCount = 1; 
-						offSet = 0;
-						
-						for(int i = 0; i < errorList.size(); i++)
-						{
-							addMarker(inputIFile, IMarker.PROBLEM, errorList.get(i).toString(), 
-									(int) lineStartMethod.invoke(errorList.get(i), new Object[] {}),
-									(int) lineEndMethod.invoke(errorList.get(i), new Object[] {}),
-									(int) columnStartMethod.invoke(errorList.get(i), new Object[] {}),
-									(int) columnEndMethod.invoke(errorList.get(i), new Object[] {}),
-									IMarker.SEVERITY_ERROR, IMarker.PRIORITY_HIGH,
-									(int) startCharacterMethod.invoke(errorList.get(i), new Object[] {}),
-									(int) stopCharacterMethod.invoke(errorList.get(i), new Object[] {}));
+						//if it is null, type checking was never reached
+						if(typeErrorReporter != null) {
+							errorList = (List<Object>) this.errorReporterClass.getMethod("getErrorList").invoke(typeErrorReporter, new Object[] {});
+							warningList = (List<Object>) this.errorReporterClass.getMethod("getWarningList").invoke(typeErrorReporter, new Object[] {});
 						}
+						// parse errors
+						else {
+							errorList = (List<Object>) this.errorReporterClass.getMethod("getErrorList").invoke(parseErrorReporter, new Object[] {});
+							warningList = (List<Object>) this.errorReporterClass.getMethod("getWarningList").invoke(parseErrorReporter, new Object[] {});
 
-						lineCount = 1; 
-						offSet = 0;
-						
-						for(int i = 0; i < warningList.size(); i++)
-						{
-							addMarker(inputIFile, IMarker.PROBLEM, warningList.get(i).toString(),
-									(int) lineStartMethod.invoke(warningList.get(i), new Object[] {}),
-									(int) lineEndMethod.invoke(warningList.get(i), new Object[] {}),
-									(int) columnStartMethod.invoke(warningList.get(i), new Object[] {}),
-									(int) columnEndMethod.invoke(warningList.get(i), new Object[] {}),									
-									IMarker.SEVERITY_WARNING, IMarker.PRIORITY_NORMAL,
-									(int) startCharacterMethod.invoke(warningList.get(i), new Object[] {}),
-									(int) stopCharacterMethod.invoke(warningList.get(i), new Object[] {}));
-						}
-						
-
-						String targetException = ex.getTargetException().getMessage();
-						if(targetException != null)
-						{
-							Scanner scanner = new Scanner(ex.getTargetException().getMessage());
-							//Format of error:
-							//[15:9] Unexpected uint
-							scanner.useDelimiter("(\\[|:|\\])");
-							if(errorList.size() > 0)
-							{
-								this.errorLine = (int) lineStartMethod.invoke(errorList.get(0), new Object[] {}); //scanner.nextInt();
-								this.errorColumn = (int) columnStartMethod.invoke(errorList.get(0), new Object[] {}); //scanner.nextInt();
+							String targetException = ex.getTargetException().getMessage();
+							if(targetException != null) {
+								Scanner scanner = new Scanner(ex.getTargetException().getMessage());
+								//Format of error:
+								//[15:9] Unexpected uint
+								scanner.useDelimiter("(\\[|:|\\])");
+								if(errorList.size() > 0)
+								{
+									this.errorLine = (int) lineStartMethod.invoke(errorList.get(0), new Object[] {}); //scanner.nextInt();
+									this.errorColumn = (int) columnStartMethod.invoke(errorList.get(0), new Object[] {}); //scanner.nextInt();
+								}
+								this.message = scanner.next().trim();
+								scanner.close();
 							}
-							this.message = scanner.next().trim();
-							scanner.close();
 						}
+
+						listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, IMarker.PRIORITY_HIGH);
+						listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING, IMarker.PRIORITY_NORMAL);
 					}
 
+
 					return tree;
-				} catch(InvocationTargetException ex)
-				{
-					
 				}
-				catch (Exception ex)
-				{
+				catch (Exception ex) {
 					ex.printStackTrace();
 				}
-
-
 			}
-		} catch(CoreException ex)
-		{}
-		
+		} 
+		catch(CoreException ex) {}
+
 		return null;
 	}
 
+	private void listErrors( List<Object> errors, IFile file, int severity, int priority ) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+		for(Object error : errors) {
+			addMarker(file, IMarker.PROBLEM, error.toString(), 
+					(int) lineStartMethod.invoke(error, new Object[] {}),
+					(int) lineEndMethod.invoke(error, new Object[] {}),
+					(int) columnStartMethod.invoke(error, new Object[] {}),
+					(int) columnEndMethod.invoke(error, new Object[] {}),
+					severity, priority,
+					(int) startCharacterMethod.invoke(error, new Object[] {}),
+					(int) stopCharacterMethod.invoke(error, new Object[] {}));
+		}		
+	}
+
 	private void addMarker(IFile file, String markerType, String message, int lineStart, int lineEnd, int columnStart, 
-			int columnEnd, int severity, int priority, int startCharacter, int stopCharacter)
-	{
-		try{			
-			
+			int columnEnd, int severity, int priority, int startCharacter, int stopCharacter) {
+		try{
 			Map<String, Object> attrs = new HashMap<String, Object>();			
 			MarkerUtilities.setMessage(attrs, message);			
-			
+
 			MarkerUtilities.setCharStart(attrs, startCharacter);			
-			
+
 			if(startCharacter == stopCharacter)
 				stopCharacter = stopCharacter + 2;
-			 
+
 			MarkerUtilities.setCharEnd(attrs, stopCharacter);
-			
+
 			attrs.put(IMarker.SEVERITY, severity);
 			attrs.put(IMarker.PRIORITY, priority);
-			
+
 			MarkerUtilities.createMarker(file, attrs, markerType);				
 
 		} catch(CoreException ex)
 		{
-			
+
 			System.out.println(ex.toString());
 			// Need to handle the case where the marker no longer exists
 		}
@@ -704,30 +598,21 @@ public class ShadowCompilerInterface
 	}
 
 
-	// [This method seems like it should be deprecated]
-	// Further testing needs to be done. 
-	public Object compile(InputStream input, String encoding)
-	{
+	/*
+
+	public Object compile(InputStream input, String encoding) {
 		this.errorLine = (this.errorColumn = 0);
 		this.message = null;
-		if (this.shadowParserClass != null) {
-			try
-			{
-				/*Object parser = this.parserClass
-						.getConstructor(new Class[] {InputStream.class, String.class })
-						.newInstance(new Object[] {input, encoding });*/				
-
+		if( shadowParserClass != null ) {
+			try {
 				Object parser = this.shadowParserClass
 						.getConstructor(new Class[] {InputStream.class, String.class })
 						.newInstance(new Object[] {input, encoding });
 
-				/*return this.parserClass.getMethod("CompilationUnit", new Class[0])
-						.invoke(parser, new Object[0]);*/
 				return this.shadowParserClass.getMethod("compilationUnit", new Class[0])
 						.invoke(parser, new Object[0]);
 			}
-			catch (InvocationTargetException ex) 
-			{	
+			catch (InvocationTargetException ex) {	
 				Scanner scanner = new Scanner(ex.getTargetException().getMessage());
 				//Format of error:
 				//[15:9] Unexpected uint
@@ -736,20 +621,19 @@ public class ShadowCompilerInterface
 				this.errorColumn = scanner.nextInt();				
 				this.message = scanner.next().trim();
 				scanner.close();
-			}
-			catch (Exception ex)
-			{
-				ex.printStackTrace();
-			}
+			} 
+			catch (IllegalAccessException |  IllegalArgumentException | NoSuchMethodException | SecurityException | InstantiationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
 		}
 		return null;
 	}
+	 */
 
-	private Object[] getTokens(Object context)
-	{
+	private Object[] getTokens(Object context) {
 		if ((this.contextClass != null) && (this.contextClass.isInstance(context))) {
-			try
-			{
+			try {
 				int numChildren = ((Integer)this.contextClass.getMethod("getChildCount", new Class[0]).invoke(context, new Object[0])).intValue();				 				
 				Object[] children = new Object[numChildren];
 
@@ -760,8 +644,7 @@ public class ShadowCompilerInterface
 
 				return children;
 			}
-			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
-			{
+			catch (InvocationTargetException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException ex) {
 				ex.printStackTrace();
 			}
 		}
@@ -781,42 +664,57 @@ public class ShadowCompilerInterface
 
 	}
 
+	//Takes in a context and retrieves its first meaningful token  
+	private Object getToken(Object element) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+		String name = element.getClass().getSimpleName();
+		Object[] tokens = getTokens(element);
+
+		//classes, interfaces, exceptions, and enums need special handling because of kind: "class", "interface", etc.
+		if( name.equals("ClassOrInterfaceDeclarationContext") || name.equals("EnumDeclarationContext") ) {
+			element = tokens[1];
+
+			//also, they can have an optional package in front
+			name = element.getClass().getSimpleName();					
+			if( name.equals("UnqualifiedNameContext") )
+				element = tokens[3]; //skip the package name and '@' sign
+		}
+		else
+			element = tokens[0];
+
+		return terminalInterface.getMethod("getSymbol", new Class[0]).invoke(element, new Object[0]);		
+	}
+
 	public int getLine(Object element)
 	{
-		if( element instanceof Tree )
-		{
+		if( element instanceof Tree ) {
 			Tree tree = (Tree) element;
 			element = tree.getNode();			
 		}
 
-		if ((this.contextClass != null) && (this.contextClass.isInstance(element))) {
-			try
-			{
-				return ((Integer)this.contextClass.getMethod("lineStart", new Class[0]).invoke(element, new Object[0])).intValue();
-			}
-			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
-			{
+		if ((this.contextClass != null) && (this.contextClass.isInstance(element))) {			
+			try {
+				Object token = getToken(element);					
+				return ((Integer)this.tokenInterface.getMethod("getLine", new Class[0]).invoke(token, new Object[0])).intValue();
+			}	
+			catch (InvocationTargetException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException ex) {
 				ex.printStackTrace();
 			}
 		}
 		return 0;
 	}
 
-	public int getColumn(Object element)
-	{		
-		if( element instanceof Tree )
-		{
+	public int getColumn(Object element) {		
+		if( element instanceof Tree ) {
 			Tree tree = (Tree) element;
 			element = tree.getNode();			
 		}
 
 		if ((this.contextClass != null) && (this.contextClass.isInstance(element))) {
-			try
-			{
-				return ((Integer)this.contextClass.getMethod("columnStart", new Class[0]).invoke(element, new Object[0])).intValue();
-			}
-			catch (InvocationTargetException localInvocationTargetException) {}catch (Exception ex)
-			{
+			try {
+				Object token = getToken(element);				
+				return ((Integer)this.tokenInterface.getMethod("getCharPositionInLine", new Class[0]).invoke(token, new Object[0])).intValue();
+			}			
+			catch (InvocationTargetException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException ex) {
 				ex.printStackTrace();
 			}
 		}

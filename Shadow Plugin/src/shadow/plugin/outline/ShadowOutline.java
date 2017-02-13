@@ -27,7 +27,7 @@ extends ContentOutlinePage
 	public ShadowOutline(ITextEditor textEditor)
 	{
 		this.editor = textEditor;
-		update();
+		update();		
 	}
 
 	public void createControl(Composite parent)
@@ -61,48 +61,26 @@ extends ContentOutlinePage
 		try
 		{
 			ISelection selection = event.getSelection();
-			if (!selection.isEmpty())
-			{
+			if (!selection.isEmpty()) {
 				Object element = ((IStructuredSelection)selection).getFirstElement();
 				int column;
 				int line;
 				int length = 1;
 
-				if ((element instanceof ShadowOutlineError))
-				{
+				if ((element instanceof ShadowOutlineError)) {
 					ShadowOutlineError error = (ShadowOutlineError)element;
 					line = error.getLine();
 					column = error.getColumn();
 
-					if( !error.hasError() )
-					{
-
+					if( !error.hasError() ) {
 						IWorkbench wb = PlatformUI.getWorkbench();
 						IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
-
-
 
 						PreferenceDialog dialog = 
 								PreferencesUtil.createPreferenceDialogOn(window.getShell(), 
 										"shadow.plugin.preferences.PreferencePage", null, null);
 						if (dialog != null)
 							dialog.open();
-
-						/*  
-        	PreferencePage page = PreferencePage.getDefault();
-        	PreferenceManager manager = new PreferenceManager();
-        	IPreferenceNode node = new PreferenceNode("1", page);
-        	manager.addToRoot(node);
-
-        	 IWorkbench wb = PlatformUI.getWorkbench();
-        	   IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
-        	   IWorkbenchPage activePage = win.getActivePage();
-
-        	PreferenceDialog dialog = new PreferenceDialog(new Shell(), manager);
-        	dialog.create();
-        	dialog.setMessage(page.getTitle());
-        	dialog.open();
-						 */        	  
 					}
 				}
 				else
@@ -113,12 +91,7 @@ extends ContentOutlinePage
 					length = compiler.getLength(element);
 				}
 				IDocument doc = this.editor.getDocumentProvider().getDocument(this.editor.getEditorInput());
-				int offset = doc.getLineOffset(line - 1);
-				for (int i = 1; i < column; i++) {
-					if (doc.getChar(offset++) == '\t') {
-						i += 7;
-					}
-				}
+				int offset = doc.getLineOffset(line - 1) + column;
 				this.editor.selectAndReveal(offset, length);
 			}
 		}
