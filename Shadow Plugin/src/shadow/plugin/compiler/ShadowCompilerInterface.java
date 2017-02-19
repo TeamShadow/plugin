@@ -457,7 +457,7 @@ public class ShadowCompilerInterface {
 		Tree tree = null;
 		Path inputPath = newInput.getPath().toFile().toPath(); //path.toFile().toPath();
 		IFile inputIFile = newInput.getFile();
-
+		
 		// delete all of the existing IMarkers.
 		int depth = IResource.DEPTH_INFINITE;
 
@@ -540,8 +540,8 @@ public class ShadowCompilerInterface {
 							}
 						}
 
-						listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, IMarker.PRIORITY_HIGH);
-						listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING, IMarker.PRIORITY_NORMAL);
+						listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR);
+						listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING);
 					}
 
 
@@ -557,16 +557,36 @@ public class ShadowCompilerInterface {
 		return null;
 	}
 
-	private void listErrors( List<Object> errors, IFile file, int severity, int priority ) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	private void listErrors( List<Object> errors, IFile file, int severity) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
 		for(Object error : errors) {
-			addMarker(file, IMarker.PROBLEM, error.toString(), 
-					(int) lineStartMethod.invoke(error, new Object[] {}),
-					(int) lineEndMethod.invoke(error, new Object[] {}),
-					(int) columnStartMethod.invoke(error, new Object[] {}),
-					(int) columnEndMethod.invoke(error, new Object[] {}),
-					severity, priority,
-					(int) startCharacterMethod.invoke(error, new Object[] {}),
-					(int) stopCharacterMethod.invoke(error, new Object[] {}));
+			
+			String message = error.toString();
+			//first remove file name, in parentheses
+			if( message.contains(")") )
+				message = message.substring(message.indexOf(')') + 1);
+			
+			//then remove line and column
+			if( message.contains("]") )
+				message = message.substring(message.indexOf(']') + 1);
+			
+			//then remove trailing lines showing the error in context
+			if( message.contains("\n") )
+				message = message.substring(0, message.indexOf('\n'));
+			
+			//get \r just in case
+			if( message.contains("\r") )
+				message = message.substring(0, message.indexOf('\r'));
+
+			
+			if( !message.isEmpty() )			
+				addMarker(file, IMarker.PROBLEM, message, 
+						(int) lineStartMethod.invoke(error, new Object[] {}),
+						(int) lineEndMethod.invoke(error, new Object[] {}),
+						(int) columnStartMethod.invoke(error, new Object[] {}),
+						(int) columnEndMethod.invoke(error, new Object[] {}),
+						severity, IMarker.PRIORITY_NORMAL,
+						(int) startCharacterMethod.invoke(error, new Object[] {}),
+						(int) stopCharacterMethod.invoke(error, new Object[] {}));
 		}		
 	}
 
@@ -580,11 +600,14 @@ public class ShadowCompilerInterface {
 
 			if(startCharacter == stopCharacter)
 				stopCharacter = stopCharacter + 2;
+			else
+				stopCharacter++;
 
 			MarkerUtilities.setCharEnd(attrs, stopCharacter);
 
 			attrs.put(IMarker.SEVERITY, severity);
-			attrs.put(IMarker.PRIORITY, priority);
+			attrs.put(IMarker.PRIORITY, priority);		
+
 
 			MarkerUtilities.createMarker(file, attrs, markerType);				
 

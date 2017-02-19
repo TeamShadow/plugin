@@ -1,20 +1,23 @@
 package shadow.plugin.editor;
 
+import org.eclipse.jface.text.ITextHover;
 import org.eclipse.jface.text.presentation.IPresentationReconciler;
 import org.eclipse.jface.text.presentation.PresentationReconciler;
 import org.eclipse.jface.text.rules.DefaultDamagerRepairer;
+import org.eclipse.jface.text.source.IAnnotationHover;
 import org.eclipse.jface.text.source.ISourceViewer;
-import org.eclipse.jface.text.source.SourceViewerConfiguration;
+import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
+
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.util.ShadowColorProvider;
 
 public class ShadowSourceViewerConfiguration
-  extends SourceViewerConfiguration
+  extends TextSourceViewerConfiguration
 {
   public int getTabWidth(ISourceViewer sourceViewer)
   {
     return 4;
-  }
+  }  
   
   public String getConfiguredDocumentPartitioning(ISourceViewer sourceViewer)
   {
@@ -41,4 +44,9 @@ public class ShadowSourceViewerConfiguration
     
     return reconciler;
   }
+  
+  @Override
+	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
+		return new ShadowTextHover();
+	}
 }

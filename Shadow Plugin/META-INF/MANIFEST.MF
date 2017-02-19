@@ -24,3 +24,4 @@ Export-Package: shadow.plugin,
  shadow.plugin.outline,
  shadow.plugin.preferences,
  shadow.plugin.util
+Import-Package: org.eclipse.core.filesystem
