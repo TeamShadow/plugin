@@ -11,6 +11,7 @@ import shadow.plugin.util.ShadowColorProvider;
 public class ShadowPlugin
   extends AbstractUIPlugin
 {
+	public final static String SHADOW_PARTITIONING= "__shadow_partitioning"; //$NON-NLS-1$
   public static final String PLUGIN_ID = "shadow.plugin";
   private static ShadowPlugin plugin;
   private ShadowColorProvider colorProvider;
