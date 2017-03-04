@@ -7,6 +7,8 @@ import org.eclipse.jface.text.ITextDoubleClickStrategy;
 import org.eclipse.jface.text.ITextHover;
 import org.eclipse.jface.text.presentation.IPresentationReconciler;
 import org.eclipse.jface.text.presentation.PresentationReconciler;
+import org.eclipse.jface.text.reconciler.IReconciler;
+import org.eclipse.jface.text.reconciler.MonoReconciler;
 import org.eclipse.jface.text.rules.DefaultDamagerRepairer;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
@@ -17,6 +19,13 @@ import shadow.plugin.util.ShadowColorProvider;
 public class ShadowSourceViewerConfiguration
   extends TextSourceViewerConfiguration
 {
+	private ShadowEditor editor;
+	
+	public ShadowSourceViewerConfiguration(ShadowEditor editor)
+	{
+		this.editor = editor;
+	}
+	
   public int getTabWidth(ISourceViewer sourceViewer)
   {
     return 4;
@@ -34,7 +43,8 @@ public class ShadowSourceViewerConfiguration
   
   @Override
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
-		IAutoEditStrategy strategy= (IDocument.DEFAULT_CONTENT_TYPE.equals(contentType) ? new ShadowAutoIndentStrategy() : new DefaultIndentLineAutoEditStrategy());
+		//IAutoEditStrategy strategy= (IDocument.DEFAULT_CONTENT_TYPE.equals(contentType) ? new ShadowAutoIndentStrategy() : new DefaultIndentLineAutoEditStrategy());
+	  IAutoEditStrategy strategy= new DefaultIndentLineAutoEditStrategy();
 		return new IAutoEditStrategy[] { strategy };
 	}
 	
@@ -49,6 +59,19 @@ public class ShadowSourceViewerConfiguration
 		return new String[] { "\t", "    " };
 	}
   
+  @Override
+  public IReconciler getReconciler(ISourceViewer sourceViewer)
+  {
+	  ShadowReconcilingStrategy strategy = new ShadowReconcilingStrategy();
+	  strategy.setEditor(editor);
+	  
+	  MonoReconciler reconciler = new MonoReconciler(strategy,false);
+      
+      return reconciler;
+  }
+  
+  
+  @Override
   public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer)
   {
     PresentationReconciler reconciler = new PresentationReconciler();

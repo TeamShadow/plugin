@@ -1,5 +1,7 @@
 package shadow.plugin.editor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.ResourceBundle;
 
 import org.eclipse.core.runtime.CoreException;
@@ -13,6 +15,7 @@ import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.Region;
+import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.DefaultCharacterPairMatcher;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.ICharacterPairMatcher;
@@ -77,6 +80,7 @@ extends TextEditor
 
 	private ShadowOutline outline;
 	private ProjectionSupport projectionSupport;
+	private ProjectionAnnotationModel annotationModel;
 
 	
 	@Override
@@ -137,11 +141,6 @@ extends TextEditor
 	}
 
 
-
-
-
-
-
 	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class required)
 	{
@@ -168,7 +167,7 @@ extends TextEditor
 	@Override
 	protected void initializeEditor() {	
 		super.initializeEditor();       
-		setSourceViewerConfiguration(new ShadowSourceViewerConfiguration());
+		setSourceViewerConfiguration(new ShadowSourceViewerConfiguration(this));
 	}
 
 	@Override
@@ -193,6 +192,31 @@ extends TextEditor
 		projectionSupport.addSummarizableAnnotationType("org.eclipse.ui.workbench.texteditor.warning"); //$NON-NLS-1$
 		projectionSupport.install();
 		viewer.doOperation(ProjectionViewer.TOGGLE);
+		
+		annotationModel = viewer.getProjectionAnnotationModel();
+	}
+	
+	private Annotation[] oldAnnotations;	
+	public void updateFoldingStructure(ArrayList<Position> positions)
+	{
+	   Annotation[] annotations = new Annotation[positions.size()];
+
+	   //this will hold the new annotations along
+	   //with their corresponding positions
+	   HashMap<ProjectionAnnotation, Position > newAnnotations = new HashMap<ProjectionAnnotation, Position>();
+
+	   for(int i = 0; i < positions.size();i++)
+	   {
+	      ProjectionAnnotation annotation = new ProjectionAnnotation();
+
+	      newAnnotations.put(annotation, positions.get(i));
+
+	      annotations[i] = annotation;
+	   }
+
+	   annotationModel.modifyAnnotations(oldAnnotations, newAnnotations,null);
+
+	   oldAnnotations = annotations;
 	}
 
 	@Override
@@ -213,7 +237,7 @@ extends TextEditor
 
 	    char[] matchChars = {'(', ')', '[', ']', '{', '}'}; //which brackets to match     
 	    ICharacterPairMatcher matcher = new DefaultCharacterPairMatcher(matchChars ,
-	            IDocumentExtension3.DEFAULT_PARTITIONING);
+	            IDocumentExtension3.DEFAULT_PARTITIONING, true);
 	    support.setCharacterPairMatcher(matcher);
 	    support.setMatchingCharacterPainterPreferenceKeys(EDITOR_MATCHING_BRACKETS,EDITOR_MATCHING_BRACKETS_COLOR);
 
