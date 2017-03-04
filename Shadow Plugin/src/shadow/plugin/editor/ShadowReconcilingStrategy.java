@@ -233,17 +233,17 @@ public class ShadowReconcilingStrategy implements IReconcilingStrategy, IReconci
 	private int visitMethod(List<Position> positions) throws BadLocationException {
 		int startOffset = nextPos - 2;
 		int newLines = 0;
-		
-		String prefix = "";
+				
 		boolean found = false;
 		
 		Pattern p = Pattern.compile("\\s(public|private|protected)\\s.*");
+		StringBuilder prefix = new StringBuilder();
 		
-		while( startOffset >= 0 && !found ) {			
+		while( startOffset >= 0 && !found ) {	p.matcher(new StringBuffer());		
 			if( p.matcher(prefix).matches() )
 				found = true;			
 			else {
-				prefix = document.getChar(startOffset)  + prefix;
+				prefix.insert(0, document.getChar(startOffset));
 				startOffset--;
 			}
 		}
