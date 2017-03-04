@@ -6,7 +6,7 @@
        point="org.eclipse.core.filebuffers.documentSetup">
       <participant
             class="shadow.plugin.editor.ShadowDocumentSetupParticipant"
-            extensions="shadow">
+            extensions="shadow,meta">
       </participant>
    </extension>
    
@@ -15,7 +15,15 @@
       <editor
             name="Shadow Editor"
             extensions="shadow"
-            icon="icons/shadow.gif"
+            icon="icons/shadow_file.gif"
+            contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+            class="shadow.plugin.editor.ShadowEditor"
+            id="shadow.plugin.editor.ShadowEditor">
+      </editor>
+      <editor
+            name="Shadow Editor"
+            extensions="meta"
+            icon="icons/meta_file.gif"
             contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
             class="shadow.plugin.editor.ShadowEditor"
             id="shadow.plugin.editor.ShadowEditor">
