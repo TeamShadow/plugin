@@ -484,13 +484,13 @@ public class ShadowCompilerInterface {
 	}
 	
 	private static String cleanError(String error) {		
-		//(file.shadow) [5:10] or
-		//[5:10]
-		if( error.matches("\\s*\\(.*\\)\\s*\\[\\d+:\\d+\\][\\s\\S]*") ||
-			error.matches("\\s*\\[\\d+:\\d+\\][\\s\\S]*"))
+		//exception: (file.shadow) [5:10] or
+		//exception: [5:10]
+		if( error.matches(".*\\(.+\\..+\\)\\s*\\[\\d+:\\d+\\][\\s\\S]*") ||
+			error.matches(".*\\[\\d+:\\d+\\][\\s\\S]*"))
 			error = error.substring(error.indexOf(']') + 1);
-		//(file.shadow)
-		else if(error.matches("\\s*\\(.*\\)[\\s\\S]*") )
+		//exception: (file.shadow)
+		else if(error.matches(".*\\(.+\\..+\\)[\\s\\S]*") )
 			error = error.substring(error.indexOf(')') + 1);
 		
 		//then remove trailing lines showing the error in context
