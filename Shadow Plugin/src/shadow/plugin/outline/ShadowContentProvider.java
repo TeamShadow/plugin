@@ -23,7 +23,7 @@ public class ShadowContentProvider
   public Object[] getElements(Object input)
   {
 	  if( root == null )
-		  return null;
+		  return new Object[] { new ShadowOutlineError() };
 	  
 	  if( root instanceof Tree )
 		  return ((Tree)root).getChildren();		  

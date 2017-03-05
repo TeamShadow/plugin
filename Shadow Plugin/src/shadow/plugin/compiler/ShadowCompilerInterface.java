@@ -508,7 +508,10 @@ public class ShadowCompilerInterface {
 		Path inputPath = newInput.getPath().toFile().toPath();
 		
 		try {	
-			Object parseCheckerContext = parse(inputPath);			
+			Object parseCheckerContext = parse(inputPath);	
+			if( parseCheckerContext == null )
+				return null;
+			
 			return buildTree(parseCheckerContext, null);
 		}
 		catch( ShadowOutlineError error ) {
@@ -529,33 +532,37 @@ public class ShadowCompilerInterface {
 		catch (CoreException e)
 		{}		
 		
-		try {
-			Field logger = loggersClass.getField("TYPE_CHECKER");
-			Object loggerValue = logger.get(null);
-			Class<?> loggerClassType = logger.getType();
-
-			configurationClass.getMethod( "buildConfiguration", new Class[] {String.class, String.class, Boolean.TYPE}).invoke(null, new Object[] { inputPath.toString(), null, new Boolean(true)});
-			
-			Object typeErrorReporter = errorReporterClass.getConstructor(new Class[] { loggerClassType })
-					.newInstance(new Object[] { loggerValue });			
-			Method typeCheckerContexts = typeCheckerClass.getMethod("typeCheck", new Class[] { Path.class, Boolean.TYPE, typeErrorReporter.getClass() });
-	
-			try{
-				//stores errors and warnings into typeErrorReporter
-				typeCheckerContexts.invoke(null, new Object[] { inputPath, new Boolean(false), typeErrorReporter });				
+		
+		if( configurationClass != null ) {		
+			try {
+				
+				configurationClass.getMethod( "buildConfiguration", new Class[] {String.class, String.class, Boolean.TYPE}).invoke(null, new Object[] { inputPath.toString(), null, new Boolean(true)});
+				
+				Field logger = loggersClass.getField("TYPE_CHECKER");
+				Object loggerValue = logger.get(null);
+				Class<?> loggerClassType = logger.getType();			
+				
+				Object typeErrorReporter = errorReporterClass.getConstructor(new Class[] { loggerClassType })
+						.newInstance(new Object[] { loggerValue });			
+				Method typeCheckerContexts = typeCheckerClass.getMethod("typeCheck", new Class[] { Path.class, Boolean.TYPE, typeErrorReporter.getClass() });
+		
+				try{
+					//stores errors and warnings into typeErrorReporter
+					typeCheckerContexts.invoke(null, new Object[] { inputPath, new Boolean(false), typeErrorReporter });				
+				}
+				catch( InvocationTargetException e ) {
+					//jumps here whenever anything fails				
+				}
+				
+				List<Object> errorList = (List<Object>) this.errorReporterClass.getMethod("getErrorList").invoke(typeErrorReporter, new Object[] {});
+				List<Object> warningList = (List<Object>) this.errorReporterClass.getMethod("getWarningList").invoke(typeErrorReporter, new Object[] {});				
+				
+				listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR);
+				listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING);			
 			}
-			catch( InvocationTargetException e ) {
-				//jumps here whenever anything fails				
-			}
-			
-			List<Object> errorList = (List<Object>) this.errorReporterClass.getMethod("getErrorList").invoke(typeErrorReporter, new Object[] {});
-			List<Object> warningList = (List<Object>) this.errorReporterClass.getMethod("getWarningList").invoke(typeErrorReporter, new Object[] {});				
-			
-			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR);
-			listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING);			
+			catch(NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException error )
+			{}
 		}
-		catch(NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException error )
-		{}
 	}
 		
 	private void listErrors( List<Object> errors, IFile file, int severity) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
