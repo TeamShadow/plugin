@@ -36,7 +36,6 @@ import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.plugin.outline.ShadowOutline;
 
 public class ShadowEditor
