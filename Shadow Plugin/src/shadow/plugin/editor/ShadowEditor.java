@@ -29,11 +29,14 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.editors.text.TextEditor;
+import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
+import shadow.plugin.ShadowPlugin;
+import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.plugin.outline.ShadowOutline;
 
 public class ShadowEditor
@@ -78,17 +81,20 @@ extends TextEditor
 	}
 
 
-	private ShadowOutline outline;
+	private ShadowOutline outline;	
 	private ProjectionSupport projectionSupport;
 	private ProjectionAnnotationModel annotationModel;
-
-	
+		
 	@Override
 	protected void createActions() {
 		super.createActions();
 
 		IAction a= new DefineFoldingRegionAction(ShadowEditorMessages.getResourceBundle(), "DefineFoldingRegion.", this);
 		setAction("DefineFoldingRegion", a);
+	}
+	
+	private void updateErrors() {		
+		ShadowPlugin.getDefault().getCompilerInterface().compile((FileEditorInput)getEditorInput());		
 	}
 
 	@Override
@@ -107,6 +113,8 @@ extends TextEditor
 		if (this.outline != null) {
 			this.outline.update();
 		}
+		
+		updateErrors();
 	}
 
 
@@ -118,6 +126,8 @@ extends TextEditor
 			this.outline.setSelection(null);
 			this.outline.update();
 		}
+		
+		updateErrors();
 	}
 
 
@@ -128,6 +138,8 @@ extends TextEditor
 		if (this.outline != null) {
 			this.outline.update();
 		}
+		
+		updateErrors();
 	}
 
 	@Override
@@ -138,6 +150,8 @@ extends TextEditor
 		if (this.outline != null) {
 			this.outline.update();
 		}
+		
+		updateErrors();
 	}
 
 

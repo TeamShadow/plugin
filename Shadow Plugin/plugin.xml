@@ -48,8 +48,8 @@
    		point = "org.eclipse.ui.console.consoleFactories">
    		<consoleFactory
    			class = "shadow.plugin.launcher.ConsoleFactory"
-   			icon = ""
-   			label = "My Console"
+   			icon = "icons/shadow.png"
+   			label = "Shadow Build"
    			>
    		</consoleFactory>
    	</extension>
@@ -110,7 +110,7 @@
 	    point="org.eclipse.debug.ui.launchShortcuts">
 	    <shortcut
 	        class="shadow.plugin.launcher.ShadowLaunchShortcut"
-	        icon=""
+	        icon="icons/shadow.png"
 	        id="org.shadow-language.shadowShortCut"
 	        label="Shadow Shortcut"
 	        modes="run">
