@@ -20,6 +20,7 @@ Bundle-ActivationPolicy: lazy
 Export-Package: shadow.plugin,
  shadow.plugin.compiler,
  shadow.plugin.editor,
+ shadow.plugin.launcher,
  shadow.plugin.outline,
  shadow.plugin.preferences,
  shadow.plugin.util
