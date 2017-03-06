@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.shadow-language.plugin"
+      id="org.shadow-language.feature"
       label="Shadow Eclipse Plug-in"
-      version="0.7.0">
+      version="0.7.1">
 
    <description>
       Eclipse Plug-in for development in the Shadow programming language.
@@ -198,7 +198,7 @@
          id="org.shadow-language"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="0.7.1"
          unpack="false"/>
 
 </feature>

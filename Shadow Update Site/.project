@@ -3,6 +3,8 @@
 	<name>Shadow Update Site</name>
 	<comment></comment>
 	<projects>
+		<project>Shadow Feature</project>
+		<project>Shadow Plugin</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

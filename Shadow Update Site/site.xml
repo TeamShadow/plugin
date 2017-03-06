@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.shadow-language.plugin_0.7.0.jar" id="org.shadow-language.plugin" version="0.7.0">
-      <category name="Shadow Eclipse Plugin"/>
+   <feature url="features/org.shadow-language.feature_0.7.1.jar" id="org.shadow-language.feature" version="0.7.1">
+      <category name="Shadow Plug-in for Eclipse"/>
    </feature>
-   <category-def name="Shadow Eclipse Plugin" label="Shadow Eclipse Plugin">
+   <category-def name="Shadow Plug-in for Eclipse" label="Shadow Plug-in for Eclipse">
       <description>
-         This plugin provides syntax highlighting, code folding, and brace matching for Shadow source files in the Eclipse IDE.  If a Shadow compiler is available in the form of a shadow.jar file, it can also provide code outlining, mark errors and warnings in source code, and compile and launch programs.
+         This plug-in provides syntax highlighting, brace matching, and code folding support for Shadow source files in the Eclipse IDE.  If a Shadow compiler is available in the form of a shadow.jar file, the plug-in can also outline code, report errors and warnings in the source code, and compile and launch programs.
       </description>
    </category-def>
 </site>
