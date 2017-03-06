@@ -4,12 +4,12 @@
       label="Shadow Eclipse Plug-in"
       version="0.7.0">
 
-   <description url="http://www.example.com/description">
+   <description>
       Eclipse Plug-in for development in the Shadow programming language.
    </description>
 
-   <copyright url="http://www.example.com/copyright">
-      [Enter Copyright Description here.]
+   <copyright>
+      Copyright 2017 Team Shadow
    </copyright>
 
    <license url="http://www.example.com/license">
@@ -190,11 +190,15 @@
    END OF TERMS AND CONDITIONS
    </license>
 
+   <url>
+      <update label="Shadow Eclipse Plug-in" url="http://www.shadow-language.org/updates"/>
+   </url>
+
    <plugin
          id="org.shadow-language"
          download-size="0"
          install-size="0"
-         version="0.7.0"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>
