@@ -9,6 +9,7 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -49,7 +50,9 @@ extends ContentOutlinePage
 			if ((control != null) && (!control.isDisposed()))
 			{
 				control.setRedraw(false);
-				viewer.setInput(this.editor.getEditorInput());
+				
+				IEditorInput input = editor.getEditorInput();
+				viewer.setInput(input);
 				control.setRedraw(true);
 			}
 		}

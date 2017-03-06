@@ -6,7 +6,7 @@
        point="org.eclipse.core.filebuffers.documentSetup">
       <participant
             class="shadow.plugin.editor.ShadowDocumentSetupParticipant"
-            extensions="shadow">
+            extensions="shadow,meta">
       </participant>
    </extension>
    
@@ -15,7 +15,15 @@
       <editor
             name="Shadow Editor"
             extensions="shadow"
-            icon="icons/shadow.gif"
+            icon="icons/shadow_file.gif"
+            contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+            class="shadow.plugin.editor.ShadowEditor"
+            id="shadow.plugin.editor.ShadowEditor">
+      </editor>
+      <editor
+            name="Shadow Editor"
+            extensions="meta"
+            icon="icons/meta_file.gif"
             contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
             class="shadow.plugin.editor.ShadowEditor"
             id="shadow.plugin.editor.ShadowEditor">
@@ -40,8 +48,8 @@
    		point = "org.eclipse.ui.console.consoleFactories">
    		<consoleFactory
    			class = "shadow.plugin.launcher.ConsoleFactory"
-   			icon = ""
-   			label = "My Console"
+   			icon = "icons/shadow.png"
+   			label = "Shadow Build"
    			>
    		</consoleFactory>
    	</extension>
@@ -102,7 +110,7 @@
 	    point="org.eclipse.debug.ui.launchShortcuts">
 	    <shortcut
 	        class="shadow.plugin.launcher.ShadowLaunchShortcut"
-	        icon=""
+	        icon="icons/shadow.png"
 	        id="org.shadow-language.shadowShortCut"
 	        label="Shadow Shortcut"
 	        modes="run">

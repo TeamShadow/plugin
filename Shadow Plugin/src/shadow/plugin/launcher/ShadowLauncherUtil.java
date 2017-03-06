@@ -5,11 +5,12 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
-import org.eclipse.ui.console.MessageConsoleStream;
 
 
 public class ShadowLauncherUtil {
@@ -19,14 +20,14 @@ public class ShadowLauncherUtil {
 	private static InputStream originalInStream;
 	
 	
-	public static void setConsole(PrintStream ps)
+	public static void setConsole(IOConsoleOutputStream out, IOConsoleOutputStream error)
 	{
 		originalOutStream = System.out;
 		originalErrStream = System.err;
 		originalInStream = System.in;
 		
-		System.setOut(ps);		
-		System.setErr(ps);
+		System.setOut(new PrintStream(out));		
+		System.setErr(new PrintStream(error));
 	}
 	
 	public static void resetConsole()
@@ -42,7 +43,7 @@ public class ShadowLauncherUtil {
 		IConsole[] existing = conMan.getConsoles();
 		MessageConsole console = null;// new MessageConsole("", null);
 
-		String name = "My Console";
+		String name = "Shadow Build";
 
 		for (int i = 0; i < existing.length && console == null; i++)
 			if (name.equals(existing[i].getName()))
@@ -50,15 +51,18 @@ public class ShadowLauncherUtil {
 
 		if(console == null)
 		{
+			//no console found, so create a new one
 			console = new MessageConsole(name, null);
 			console.activate();
-		}
-		//no console found, so create a new one
+		}	
 
-		conMan.addConsoles(new IConsole[]{console});				
-		MessageConsoleStream stream = console.newMessageStream(); 
+		conMan.addConsoles(new IConsole[]{console});		
+		IOConsoleOutputStream out = console.newOutputStream();
+		IOConsoleOutputStream error = console.newOutputStream();
+		error.setColor(new Color(null, 255, 0, 0));
+		
 
-		setConsole(new PrintStream(stream));
+		setConsole(out, error);
 
 
 		// execute the command

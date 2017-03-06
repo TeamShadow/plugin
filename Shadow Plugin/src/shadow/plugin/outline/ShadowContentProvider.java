@@ -5,37 +5,30 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.plugin.compiler.ShadowCompilerInterface.Tree;
 
 public class ShadowContentProvider
   implements ITreeContentProvider
 {
-  private Tree root;
-  private ShadowCompilerInterface compiler;
-  
-  public ShadowContentProvider()
-  {
-    this.compiler = ShadowPlugin.getDefault().getCompilerInterface();    
-  }
+  private Object root = null;
   
   public void inputChanged(Viewer viewer, Object oldInput, Object newInput)
   {
-    this.root = null;
-    try {    	
-    	this.root = this.compiler.compile((FileEditorInput) newInput);
-    	
-    } 
-    catch (Exception localException) {}
- 
+	  if( newInput != null )	  
+		  root = ShadowPlugin.getDefault().getCompilerInterface().buildOutline((FileEditorInput) newInput);
+	  else
+		  root = null;
   }
   
   public Object[] getElements(Object input)
   {
-	  if( root == null )	  
-		  return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn(), this.compiler.getMessage()) };
-	  else
-		  return root.getChildren();
+	  if( root == null )
+		  return new Object[] { new ShadowOutlineError() };
+	  
+	  if( root instanceof Tree )
+		  return ((Tree)root).getChildren();		  
+	  
+	  return new Object[] { root };
   }
   
   public Object getParent(Object element)
@@ -59,7 +52,7 @@ public class ShadowContentProvider
 	if( element instanceof Tree )
 		return ((Tree)element).getChildren();
 	
-	return new Object[] { new ShadowOutlineError(this.compiler.getErrorLine(), this.compiler.getErrorColumn(), this.compiler.getMessage()) };
+	return new Object[] { element };
   }
   
   public void dispose() {}

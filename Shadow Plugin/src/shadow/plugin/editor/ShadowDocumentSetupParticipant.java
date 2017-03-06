@@ -14,7 +14,7 @@ public class ShadowDocumentSetupParticipant
   {
     IDocumentPartitioner partitioner = new FastPartitioner(ShadowPlugin.getDefault().getPartitionScanner(), ShadowPartitionScanner.SHADOW_PARTITION_TYPES);
     if ((document instanceof IDocumentExtension3)) {
-      ((IDocumentExtension3)document).setDocumentPartitioner("__shadow_partioning", partitioner);
+      ((IDocumentExtension3)document).setDocumentPartitioner(ShadowPlugin.SHADOW_PARTITIONING, partitioner);
     }
     partitioner.connect(document);
   }

@@ -1,11 +1,6 @@
 package shadow.plugin.launcher;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 
 import org.eclipse.core.runtime.IPath;
@@ -17,11 +12,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.MessageConsole;
-import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.launcher.ShadowLauncherUtil.CommandPromptOutput;
@@ -53,12 +43,15 @@ public class ShadowLaunchShortcut implements ILaunchShortcut {
 				try {
 
 					ShadowLauncherUtil launchProcesses = new ShadowLauncherUtil(); 
-					CommandPromptOutput results = launchProcesses.runProcess(inputArgs);					
+					CommandPromptOutput results = launchProcesses.runProcess(inputArgs);
+					
+					System.out.println(results.getStdout());					
+					System.err.println(results.getStderr());					
 
 					if(results.getStatus() == 0)
 					{
 						/* TODO: The execution of .exe files are only proven to work on Windows machines.
-						 * Editions need to be made to make sure that they run on Linux and Mac.
+						 * Additions need to be made to make sure that they run on Linux and Mac.
 						 */ 
 
 						ShadowLauncherUtil.resetConsole();
@@ -82,30 +75,19 @@ public class ShadowLaunchShortcut implements ILaunchShortcut {
 						}		
 
 						results = launchProcesses.runProcess(inputArgs);
-
-						System.out.println("STDOUT:");
+						
 						System.out.println(results.getStdout());
-						System.out.println("STDERR:");
 						System.err.println(results.getStderr());
-
-					}
-					else
-					{
-						System.err.println("STDERR:");
-						System.err.println(results.getStderr());
-					}
+					}					
 
 					ShadowLauncherUtil.resetConsole();
 
-				} catch (IOException e)
+				}
+				catch (IOException | InterruptedException e)
 				{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
-
 			}
 
 		}

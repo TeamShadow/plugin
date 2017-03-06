@@ -1,17 +1,11 @@
 package shadow.plugin.launcher;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Path;
-import java.util.ArrayList;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -20,19 +14,10 @@ import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.jface.preference.IPreferenceStore;
-//import org.eclipse.pde.internal.launching.launcher;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.MessageConsole;
-import org.eclipse.ui.console.MessageConsoleStream;
-import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.ShadowPlugin;
 
@@ -51,18 +36,8 @@ public class ShadowLauncher extends LaunchConfigurationDelegate {
 		if(window != null)
 		{
 			IWorkbenchPage page = window.getActivePage();
-			if(page != null)
-			{
-				IEditorPart editorPart = page.getActiveEditor();
-				IEditorInput input = editorPart.getEditorInput();
-				IPath path = ((FileEditorInput)input).getPath();
-
-				if( path instanceof Path)
-					System.out.println("It is a path");
-
-
-				try
-				{
+			if(page != null) {				
+				try {
 					IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
 							.getPreferenceStore();
 					String pathToJar = preferenceStore.getString("PATH");			
@@ -72,22 +47,15 @@ public class ShadowLauncher extends LaunchConfigurationDelegate {
 					URLClassLoader loader = URLClassLoader.newInstance(urls);
 
 					Class<?> mainClass = loader.loadClass("shadow.Main");
-					Class<?> argumentClass = loader.loadClass("shadow.Arguments");
-
 					mainClass.getMethod("main", new Class[] {String.class} );
 
 
 					System.out.println("launching");
 				}
-				catch (ClassNotFoundException | MalformedURLException ex)
+				catch (ClassNotFoundException | MalformedURLException | NoSuchMethodException | SecurityException ex)
 				{
-
+					
 				}
-				catch (NoSuchMethodException | SecurityException ex)
-				{
-					String problem = ex.getCause().toString();
-				}
-
 			}
 		}
 
