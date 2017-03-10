@@ -112,15 +112,18 @@
 	        class="shadow.plugin.launcher.ShadowLaunchShortcut"
 	        icon="icons/shadow.png"
 	        id="org.shadow-language.shadowShortCut"
-	        label="Shadow Shortcut"
+	        label="Shadow Application"
 	        modes="run">
 	        <contextualLaunch>
 	            <enablement>
-	                <with
-	                    variable="selection">
-	                    <count
-	                        value="+">
-	                    </count>
+	                <with variable="selection">
+	                    <count value="1"/>
+	                    <iterate>
+		                     <instanceof value="org.eclipse.core.resources.IFile"/>
+		                     <test
+		                           value="*.shadow"
+		                           property="org.eclipse.debug.ui.matchesPattern"/>
+                  		</iterate>
 	                </with>
 	            </enablement>
 	        </contextualLaunch>
