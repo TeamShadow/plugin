@@ -44,7 +44,7 @@
             name="Shadow">
       </page>
    </extension>
-   <extension
+   <!--extension
    		point = "org.eclipse.ui.console.consoleFactories">
    		<consoleFactory
    			class = "shadow.plugin.launcher.ConsoleFactory"
@@ -52,7 +52,7 @@
    			label = "Shadow Build"
    			>
    		</consoleFactory>
-   	</extension>
+   	</extension-->
    
    
    
