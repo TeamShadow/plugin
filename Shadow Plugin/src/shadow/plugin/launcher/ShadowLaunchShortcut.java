@@ -1,7 +1,5 @@
 package shadow.plugin.launcher;
 
-import java.util.ArrayList;
-
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.debug.ui.ILaunchShortcut;
 import org.eclipse.jface.viewers.ISelection;
@@ -15,6 +13,8 @@ import org.eclipse.ui.part.FileEditorInput;
 
 public class ShadowLaunchShortcut implements ILaunchShortcut {
 
+	private AsynchronousLauncher launcher = null;
+	
 	@Override
 	public void launch(ISelection editor, String mode)  {
 		IWorkbench wb = PlatformUI.getWorkbench();
@@ -27,7 +27,8 @@ public class ShadowLaunchShortcut implements ILaunchShortcut {
 				IEditorInput input = editorPart.getEditorInput();
 				IPath path = ((FileEditorInput)input).getPath();
 
-				new AsynchronousLauncher(path).start();				
+				launcher = new AsynchronousLauncher(path);
+				launcher.start();				
 			}
 		}
 	}

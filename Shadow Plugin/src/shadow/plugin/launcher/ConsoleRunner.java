@@ -15,8 +15,7 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
 
 public class ConsoleRunner {
 	
-	public int runProcess(ArrayList<String> inputArgs, String name) {
-		
+	public static IOConsole getConsole(String name) {
 		ConsolePlugin plugin = ConsolePlugin.getDefault();
 		IConsoleManager conMan = plugin.getConsoleManager();
 		IConsole[] existing = conMan.getConsoles();
@@ -35,7 +34,13 @@ public class ConsoleRunner {
 			console.activate();
 		}	
 				
-		conMan.addConsoles(new IConsole[]{console});		
+		conMan.addConsoles(new IConsole[]{console});
+		return console;
+	}
+	
+	public int runProcess(ArrayList<String> inputArgs, String name) {
+		IOConsole console = getConsole(name);
+		
 		IOConsoleOutputStream out = console.newOutputStream();
 		IOConsoleOutputStream error = console.newOutputStream();
 		IOConsoleInputStream in = console.getInputStream();
