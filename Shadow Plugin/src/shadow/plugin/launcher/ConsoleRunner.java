@@ -9,37 +9,34 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.console.IOConsoleInputStream;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 
 public class ConsoleRunner {
 	
-	public static IOConsole getConsole(String name) {
+	public static Console getConsole(String name) {
 		ConsolePlugin plugin = ConsolePlugin.getDefault();
 		IConsoleManager conMan = plugin.getConsoleManager();
 		IConsole[] existing = conMan.getConsoles();
-		IOConsole console = null;
+		Console console = null;
 				
 		for( int i = 0; i < existing.length && console == null; i++ )
-			if (existing[i].getName().startsWith(name) ) {
-				console = (IOConsole) existing[i];
-				console.clearConsole();		
-				console.activate();
+			if (existing[i] instanceof Console && existing[i].getName().startsWith(name) ) {
+				console = (Console) existing[i];
+				console.clearConsole();
 			}
 
-		if( console == null ) {
-			//no console found, so create a new one
-			console = new IOConsole(name, null);
-			console.activate();
-		}	
-				
+		//no console found, so create a new one
+		if( console == null )			
+			console = new Console(name);
+		
+		console.activate();
 		conMan.addConsoles(new IConsole[]{console});
 		return console;
 	}
 	
 	public int runProcess(ArrayList<String> inputArgs, String name) {
-		IOConsole console = getConsole(name);
+		Console console = getConsole(name);
 		
 		IOConsoleOutputStream out = console.newOutputStream();
 		IOConsoleOutputStream error = console.newOutputStream();
@@ -51,7 +48,8 @@ public class ConsoleRunner {
 		// execute the command		
 		Process process = null;
 		try {
-			process = new ProcessBuilder(inputArgs).start();
+			process = new ProcessBuilder(inputArgs).start();			
+			console.setProcess( process );
 
 			new Pipe( process.getInputStream(), out ).start();
 			new Pipe( process.getErrorStream(), error ).start();			
@@ -63,8 +61,10 @@ public class ConsoleRunner {
 			System.err.println("Process failed to run: " + e.getMessage());
 		}
 		finally {
-			if( process != null )
+			if( process != null ) {
 				process.destroy();
+				console.markTerminated();
+			}
 		}
 
 		return -1;

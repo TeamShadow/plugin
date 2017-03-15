@@ -43,19 +43,7 @@
             id="shadow.plugin.preferences.PreferencePage"
             name="Shadow">
       </page>
-   </extension>
-   <!--extension
-   		point = "org.eclipse.ui.console.consoleFactories">
-   		<consoleFactory
-   			class = "shadow.plugin.launcher.ConsoleFactory"
-   			icon = "icons/shadow.png"
-   			label = "Shadow Build"
-   			>
-   		</consoleFactory>
-   	</extension-->
-   
-   
-   
+   </extension>   
    
    <extension 
    		point = "org.eclipse.debug.core.launchConfigurationTypes">
@@ -128,49 +116,18 @@
 	            </enablement>
 	        </contextualLaunch>
 	    </shortcut>
-	</extension>
+	</extension>   
    
-   
-   
-   <!--
-   <extension point="org.eclipse.debug.ui.launchShortcuts">
-   		<shortcut
-   				class = "org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut"
-   				description = ""
-   				helpContextId = "org.eclipse.jdt.debug.ui.shortcut_local_java_application"
-   				icon = "$nl$/icons/full/etool16/java_app.gif"
-   				id = "org.eclipse.jdt.debug.ui.localJavaShortcut"
-   				label = "%JavaApplicationShortcut.label"
-   				modes = "run">
-   			<contextualLaunch>
-   				<enablement>
-   					<with variable = "selection">
-   						<count value = "1"/>
-   						 <iterate>
-   						  <and>
-   						   <adapt type = "org.eclipse.jdt.core.IJavaElement">
-   						   		<test property = "org.eclipse.jdt.core.isInJavaProject"/>
-   						   	</adapt>
-   						   	<or>
-   						   		<test property="org.eclipse.jdt.launching.hasMain"/>
-   						   	</or>
-   						   </and>
-   						  </iterate>
-   					</with>
-   				</enablement>
-   			</contextualLaunch>   			
-   			<configurationType
-   				id = "org.shadow-language.launchConfigurationType">
-   			</configurationType>	
-   			<description
-   				description = "Compiles and runs shadow programs."
-   				mode = "run">
-   			</description>
-   		</shortcut>
+    <extension
+         point="org.eclipse.ui.console.consolePageParticipants">
+      <consolePageParticipant
+            class="shadow.plugin.launcher.ConsoleActions"
+            id="shadow.plugin.launcher.PageParticipant">
+         <enablement>
+            <instanceof value="shadow.plugin.launcher.Console"/>
+         </enablement>
+      </consolePageParticipant>
    </extension>
-   -->
-   
-      
       
    <extension 
    		id="problemmarker"
