@@ -12,8 +12,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 
 public class ShadowLaunchShortcut implements ILaunchShortcut {
-
-	private AsynchronousLauncher launcher = null;
 	
 	@Override
 	public void launch(ISelection editor, String mode)  {
@@ -27,8 +25,7 @@ public class ShadowLaunchShortcut implements ILaunchShortcut {
 				IEditorInput input = editorPart.getEditorInput();
 				IPath path = ((FileEditorInput)input).getPath();
 
-				launcher = new AsynchronousLauncher(path);
-				launcher.start();				
+				new CompileWorker(path, true).execute();								
 			}
 		}
 	}
