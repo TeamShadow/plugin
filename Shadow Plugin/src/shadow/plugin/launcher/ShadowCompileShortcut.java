@@ -13,11 +13,13 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 
-public class ShadowLaunchShortcut implements ILaunchShortcut {	
-	
+public class ShadowCompileShortcut implements ILaunchShortcut {
+
 	@Override
-	public void launch(ISelection editor, String mode)  {		
-		IPath path = null;		
+	public void launch(ISelection editor, String mode)  {
+		
+		IPath path = null;
+		
 		if( editor instanceof TreeSelection ) {
 			TreeSelection selection = (TreeSelection) editor;			
 			Object element = selection.getFirstElement();
@@ -44,7 +46,8 @@ public class ShadowLaunchShortcut implements ILaunchShortcut {
 		}
 		
 		if( path != null )
-			new CompileWorker(path, true).execute();
+			new CompileWorker(path, false).execute();
+		
 	}
 	
 	@Override
@@ -59,9 +62,8 @@ public class ShadowLaunchShortcut implements ILaunchShortcut {
 				IEditorInput input = editorPart.getEditorInput();
 				IPath path = ((FileEditorInput)input).getPath();
 
-				new CompileWorker(path, true).execute();								
+				new CompileWorker(path, false).execute();								
 			}
 		}
-	}	
+	}
 }
-

@@ -116,6 +116,26 @@
 	            </enablement>
 	        </contextualLaunch>
 	    </shortcut>
+	    <shortcut
+	        class="shadow.plugin.launcher.ShadowCompileShortcut"
+	        icon="icons/shadow.png"
+	        id="org.shadow-language.shadowShortCut"
+	        label="Shadow Compile Only"
+	        modes="run">
+	        <contextualLaunch>
+	            <enablement>
+	                <with variable="selection">
+	                    <count value="1"/>
+	                    <iterate>
+		                     <instanceof value="org.eclipse.core.resources.IFile"/>
+		                     <test
+		                           value="*.shadow"
+		                           property="org.eclipse.debug.ui.matchesPattern"/>
+                  		</iterate>
+	                </with>
+	            </enablement>
+	        </contextualLaunch>
+	    </shortcut>
 	</extension>   
    
     <extension

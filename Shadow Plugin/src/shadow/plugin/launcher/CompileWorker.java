@@ -79,10 +79,8 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	}
 	
 	@Override
-    public void done() {
-		
-		console.markTerminated();
-		
+    public void done() {		
+		console.markTerminated();		
 		try {
 			if(runAfterCompilation && get() == 0) {
 				IPath executableFile; 
