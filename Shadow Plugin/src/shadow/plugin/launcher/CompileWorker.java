@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -21,6 +22,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	private IPath path;
 	private Console console;	
 	private boolean runAfterCompilation;
+	private IPath executable;
 	
 	public CompileWorker(IPath path, boolean runAfterCompilation) {
 		this.path = path;
@@ -29,10 +31,27 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	}	
 
 	@Override
-	protected Integer doInBackground() throws Exception {
-		String cmd = "java";
-		String pathName = path.toString();			
+	protected Integer doInBackground() throws Exception {				
+		String pathName = path.toString();
 		
+		String osName = System.getProperty("os.name").toLowerCase();		
+
+		if(osName.contains("windows"))
+			executable = path.removeFileExtension().addFileExtension("exe");
+		else
+			executable = path.removeFileExtension();
+		
+		Path pathFile = Paths.get(pathName);
+		Path executableFile = Paths.get(executable.toString());		
+		
+		// if we're running after compilation
+		// and executable is newer than changes to file, there's no need to recompile
+		// (unless some other file has changed, which we are not worrying about yet)
+		if( runAfterCompilation && Files.exists(pathFile) && Files.exists(executableFile) &&
+			Files.getLastModifiedTime(pathFile).compareTo(Files.getLastModifiedTime(executableFile)) <= 0 )
+			return 0;		
+		
+		String cmd = "java";
 		IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
 				.getPreferenceStore();
 		String pathToJar = preferenceStore.getString("PATH");
@@ -83,21 +102,16 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		console.markTerminated();		
 		try {
 			if(runAfterCompilation && get() == 0) {
-				IPath executableFile; 
-
 				String osName = System.getProperty("os.name").toLowerCase();
 				ArrayList<String> inputArgs = new ArrayList<String>();
+				String executableName = executable.toString(); 
 
-
-				if(osName.contains("windows")) {
-					executableFile = path.removeFileExtension().addFileExtension("exe");
-					inputArgs.add(executableFile.toString());
-				}
-				else {
-					executableFile = path.removeFileExtension();
-					inputArgs.add("./" + executableFile.toString());
-				}		
-				Console programConsole = Console.getConsole(executableFile.toString());
+				if(osName.contains("windows")) 
+					inputArgs.add(executableName);				
+				else 					
+					inputArgs.add("./" + executableName);
+						
+				Console programConsole = Console.getConsole(executableName);
 				
 				new SwingWorker<Integer, Void>() {
 					@Override
