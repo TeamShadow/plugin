@@ -12,6 +12,8 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingWorker;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 
@@ -23,13 +25,15 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	private IPath executable;
 	private String pathToCompiler;
 	private String arguments;
+	private IProject project;
 	
-	public CompileWorker(IPath path, String pathToCompiler, String arguments, boolean compileOnly) {
+	public CompileWorker(IPath path, String pathToCompiler, String arguments, boolean compileOnly, IProject project) {
 		this.path = path;
 		this.console = Console.getConsole("Shadow Build", false);
 		this.pathToCompiler = pathToCompiler;
 		this.arguments = arguments;
 		this.compileOnly = compileOnly;
+		this.project = project;
 	}	
 
 	@Override
@@ -85,6 +89,9 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 			inputArgs.addAll(Arrays.asList(arguments.split("\\s+")));
 		
 		int value = runProcess(inputArgs, console);
+		
+		if( project != null )
+		    project.refreshLocal(IResource.DEPTH_INFINITE, null);		
 		
 		try {
 			if( value == 0 )			

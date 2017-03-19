@@ -155,7 +155,7 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
 		if (dialog.open() == Window.OK) {
 			Object[] files = dialog.getResult();
 			IFile file = (IFile) files[0];
-			fileText.setText(file.getFullPath().toString());
+			fileText.setText(file.getLocation().toString());
 		}		
 	}
 	
@@ -174,7 +174,7 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
 
     @Override
     public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {    	
-    	configuration.setAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, ShadowLaunchConfigurationDelegate.getOpenFile());
+    	configuration.setAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, ShadowLaunchConfigurationDelegate.getPathName());
 		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILE_ONLY, false);
 		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILER, ShadowLaunchConfigurationDelegate.getDefaultCompiler());
 		configuration.setAttribute(ShadowLaunchConfigurationAttributes.ARGUMENTS, "");    	
@@ -183,7 +183,7 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
     @Override
     public void initializeFrom(ILaunchConfiguration configuration) {
         try {
-			String mainFile = configuration.getAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, ShadowLaunchConfigurationDelegate.getOpenFile());
+			String mainFile = configuration.getAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, ShadowLaunchConfigurationDelegate.getPathName());
 			fileText.setText(mainFile);
 			    			
 			boolean compileOnly = configuration.getAttribute(ShadowLaunchConfigurationAttributes.COMPILE_ONLY, false);
@@ -201,10 +201,10 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
 
     @Override
     public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-    	configuration.setAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, fileText.getText());
+    	configuration.setAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, fileText.getText().trim());
 		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILE_ONLY, compileOnlyButton.getSelection());
-		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILER, compilerText.getText());
-		configuration.setAttribute(ShadowLaunchConfigurationAttributes.ARGUMENTS, argumentsText.getText());   
+		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILER, compilerText.getText().trim());
+		configuration.setAttribute(ShadowLaunchConfigurationAttributes.ARGUMENTS, argumentsText.getText().trim());   
     }
 
     @Override
@@ -218,16 +218,29 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
 	}
     
     @Override
-    public boolean canSave() {
+    public boolean isValid(ILaunchConfiguration configuration) {
+    	try {
+			return checkFileAndCompiler(configuration.getAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, ""), configuration.getAttribute(ShadowLaunchConfigurationAttributes.COMPILER, ""));
+		} catch (CoreException e) 
+    	{}
     	
-    	IPath file = new Path(fileText.getText());
-    	if( !file.toFile().exists() && file.getFileExtension().toLowerCase().equals("shadow") )
+    	return false;
+    }
+    
+    private boolean checkFileAndCompiler(String filePath, String compilerPath) {
+    	IPath file = new Path(filePath);
+    	if( file == null || !file.toFile().exists() || !file.getFileExtension().toLowerCase().equals("shadow") )
     		return false;
     	  	
-    	java.nio.file.Path compiler = java.nio.file.Paths.get(compilerText.getText());
-    	if( !Files.exists(compiler) || !compilerText.getText().toLowerCase().endsWith(".jar") )
+    	java.nio.file.Path compiler = java.nio.file.Paths.get(compilerPath);
+    	if( compiler == null || !Files.exists(compiler) || !compilerText.getText().trim().toLowerCase().endsWith(".jar") )
     		return false;
     	
-    	return true;    	
+    	return true; 
+    }
+    
+    @Override
+    public boolean canSave() {    	
+    	return checkFileAndCompiler(fileText.getText().trim(), compilerText.getText().trim());    	
     }
 }
