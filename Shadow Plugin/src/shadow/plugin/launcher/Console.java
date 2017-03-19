@@ -1,5 +1,7 @@
 package shadow.plugin.launcher;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -7,7 +9,10 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
@@ -91,7 +96,7 @@ public class Console extends IOConsole {
 	}	
 
 	private Action createTerminateButton() {
-		ImageDescriptor imageDescriptor = ImageDescriptor.createFromFile(getClass(), "/icons/cancel.gif");
+		ImageDescriptor imageDescriptor = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_ELCL_STOP));
 
 		Action action = new Action("Terminate", imageDescriptor) {
 			public void run() {            	
@@ -99,7 +104,7 @@ public class Console extends IOConsole {
 			}
 		};
 
-		imageDescriptor = ImageDescriptor.createFromFile(getClass(), "/icons/disabled_cancel.gif");
+		imageDescriptor = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_ELCL_STOP_DISABLED));
 		action.setDisabledImageDescriptor(imageDescriptor);
 		action.setEnabled(false);
 
@@ -107,13 +112,13 @@ public class Console extends IOConsole {
 	}
 
 	private Action createRemoveAllButton() {
-		ImageDescriptor imageDescriptor = ImageDescriptor.createFromFile(getClass(), "/icons/remove_all.gif");
+		ImageDescriptor imageDescriptor = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_ELCL_REMOVEALL));
 		Action action = new Action("Remove All Terminated Launches", imageDescriptor) {
 			public void run() {
 				removeAll();
 			}
 		};
-		imageDescriptor = ImageDescriptor.createFromFile(getClass(), "/icons/disabled_remove_all.gif");
+		imageDescriptor = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_ELCL_REMOVEALL_DISABLED));
 		action.setDisabledImageDescriptor(imageDescriptor);
 		action.setEnabled(false);
 
@@ -121,14 +126,14 @@ public class Console extends IOConsole {
 	}
 
 	private Action createRemoveButton() {
-		ImageDescriptor imageDescriptor = ImageDescriptor.createFromFile(getClass(), "/icons/remove.gif");
+		ImageDescriptor imageDescriptor = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_ELCL_REMOVE));
 		Action action = new Action("Remove Launch", imageDescriptor) {
 			public void run() {
 				remove();
 			}
 		};
 
-		imageDescriptor = ImageDescriptor.createFromFile(getClass(), "/icons/disabled_remove.gif");
+		imageDescriptor = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_ELCL_REMOVE_DISABLED));
 		action.setDisabledImageDescriptor(imageDescriptor);
 		action.setEnabled(false);
 
