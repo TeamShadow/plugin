@@ -86,5 +86,10 @@ implements IStyledLabelProvider
 	public void dispose()
 	{
 		super.dispose();
+		
+		for( Image image : images.values() )
+			image.dispose();
+		
+		images.clear();		
 	}
 }

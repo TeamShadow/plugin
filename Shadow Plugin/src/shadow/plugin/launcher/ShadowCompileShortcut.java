@@ -46,7 +46,7 @@ public class ShadowCompileShortcut implements ILaunchShortcut {
 		}
 		
 		if( path != null )
-			new CompileWorker(path, false).execute();
+			new CompileWorker(path, ShadowLaunchConfigurationDelegate.getDefaultCompiler(), "", true).execute();
 		
 	}
 	
@@ -62,7 +62,7 @@ public class ShadowCompileShortcut implements ILaunchShortcut {
 				IEditorInput input = editorPart.getEditorInput();
 				IPath path = ((FileEditorInput)input).getPath();
 
-				new CompileWorker(path, false).execute();								
+				new CompileWorker(path, ShadowLaunchConfigurationDelegate.getDefaultCompiler(), "", true).execute();								
 			}
 		}
 	}

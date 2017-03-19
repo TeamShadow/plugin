@@ -43,55 +43,35 @@
             id="shadow.plugin.preferences.PreferencePage"
             name="Shadow">
       </page>
-   </extension>   
-   
-   <extension 
-   		point = "org.eclipse.debug.core.launchConfigurationTypes">
-   		<launchConfigurationType
-   				id = "org.shadow-language.launchConfigurationType"
-   				name = "Shadow Application"   				
-   				delegate = "shadow.plugin.launcher.ShadowLauncher"
-   				modes = "run">
-   		</launchConfigurationType>
    </extension>
    
-   
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+         <launchConfigurationType
+	        name="Shadow Launch"
+	        delegate="shadow.plugin.launcher.ShadowLaunchConfigurationDelegate"
+	        modes="run"
+	        id="shadow.plugin.launcher.launchConfigurationType">
+	    </launchConfigurationType>
+   </extension>   
+  
    <extension
    		point = "org.eclipse.debug.ui.launchConfigurationTabGroups">
    		<launchConfigurationTabGroup
-   			id = "org.shadow-language.basicLaunchTabGroup"
-   			type = "org.shadow-language.launchConfigurationType"
-   			class = "shadow.plugin.launcher.ShadowTabGroup"> <!--was ShadowLaunchTabGroup -->
+   			id = "shadow.plugin.launcher.launchConfigurationTabGroup"
+   			type = "shadow.plugin.launcher.launchConfigurationType"
+   			class = "shadow.plugin.launcher.ShadowTabGroup">
    		</launchConfigurationTabGroup>
    	</extension>
-   
-   <!--
-   <extension
-   		point = "org.eclipse.debug.ui.launchConfigurationTypeImages">
-   		<launchConfigurationTypeImage
-   			id = ""
-   			configTypeID = ""
-   			icon = "">
-   		</launchConfigurationTypeImage>
-   	</extension>
-   -->
-   
-   <!--
-   <extension 
-   		point = "org.eclipse.debug.core.launchDelegates">
-   			<launchDelegate
-   				id = "org.shadow-language.launchProfileDelegate"
-   				delegate = "shadow.plugin.launcher.ShadowLauncher">
-   			</launchDelegate>
-   			
-   			<modeCombination
-   				modes = "run"
-   				perspective = "">
-   			</modeCombination>
-   			
-   	</extension>
-   -->
-   
+  
+  	<extension
+        point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+	    <launchConfigurationTypeImage
+	            id="shadow.plugin.launcher.launchconfigurationtypeimage"
+	            configTypeID="shadow.plugin.launcher.launchConfigurationType"
+	            icon="icons/shadow.png">
+	    </launchConfigurationTypeImage>
+	</extension>
    
    
    <extension
@@ -101,7 +81,8 @@
 	        icon="icons/shadow.png"
 	        id="org.shadow-language.shadowShortCut"
 	        label="Shadow Application"
-	        modes="run">
+	        modes="run"
+	        description="Run Shadow program, compiling first if main source file has been updated more recently than executable.">
 	        <contextualLaunch>
 	            <enablement>
 	                <with variable="selection">
@@ -121,7 +102,8 @@
 	        icon="icons/shadow.png"
 	        id="org.shadow-language.shadowShortCut"
 	        label="Shadow Compile Only"
-	        modes="run">
+	        modes="run"
+	        description="Compile Shadow program but do not run, forcing compilation even if main source file has been updated more recently than executable.">
 	        <contextualLaunch>
 	            <enablement>
 	                <with variable="selection">
@@ -158,10 +140,5 @@
    		<attribute name="message" />
    		<attribute name="location" />
    	</extension>
-   <extension
-         point="org.eclipse.debug.core.launchConfigurationTypes">
-   </extension>
-   <extension
-         point="org.eclipse.debug.core.launchModes">
-   </extension>
+   
 </plugin>

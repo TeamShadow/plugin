@@ -1,5 +1,11 @@
 package shadow.plugin;
 
+import java.io.IOException;
+import java.net.URL;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -13,11 +19,24 @@ public class ShadowPlugin
 {
 	public final static String SHADOW_PARTITIONING= "__shadow_partitioning"; //$NON-NLS-1$
   public static final String PLUGIN_ID = "shadow.plugin";
+  public static final String SHADOW_ICON = "shadow.plugin.icon";
+  
   private static ShadowPlugin plugin;
   private ShadowColorProvider colorProvider;
   private ShadowCodeScanner codeScanner;
   private ShadowPartitionScanner partitionScanner;
   private ShadowCompilerInterface compilerInterface;
+  
+  public ShadowPlugin() {
+		try {
+			URL fileURL = FileLocator.find(getBundle(), new Path("/icons/shadow.png"), null);
+			URL url = FileLocator.resolve(fileURL);
+			ImageDescriptor imageDescriptor = ImageDescriptor.createFromURL(url);
+			getImageRegistry().put(SHADOW_ICON, imageDescriptor);
+		}
+		catch (IOException e)
+		{}		
+  }
   
   public void start(BundleContext context)
     throws Exception
@@ -29,10 +48,11 @@ public class ShadowPlugin
   public void stop(BundleContext context)
     throws Exception
   {
-    plugin = null;
+    plugin = null;   
+    
     super.stop(context);
   }
-  
+
   public static ShadowPlugin getDefault()
   {
     return plugin;

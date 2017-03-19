@@ -11,6 +11,7 @@ import shadow.plugin.ShadowPlugin;
 public class PreferencePage extends FieldEditorPreferencePage  implements IWorkbenchPreferencePage {
 
 	private static PreferencePage page;
+	public static final String COMPILER_PATH = "shadow.plugin.preferences.PreferencePage.CompilerPath";
 	
 	public PreferencePage() {
 		super(FieldEditorPreferencePage.GRID);
@@ -33,7 +34,7 @@ public class PreferencePage extends FieldEditorPreferencePage  implements IWorkb
 
 	@Override
 	protected void createFieldEditors() {
-		addField(new FileFieldEditor("PATH", "&Path to shadow.jar:",
+		addField(new FileFieldEditor(COMPILER_PATH, "&Path to shadow.jar:",
 		        getFieldEditorParent()));
 	}
 

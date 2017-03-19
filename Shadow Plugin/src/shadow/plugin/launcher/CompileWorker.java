@@ -7,27 +7,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingWorker;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.console.IOConsoleOutputStream;
-
-import shadow.plugin.ShadowPlugin;
 
 public class CompileWorker extends SwingWorker<Integer, Void> {
 	
 	private IPath path;
 	private Console console;	
-	private boolean runAfterCompilation;
+	private boolean compileOnly;
 	private IPath executable;
+	private String pathToCompiler;
+	private String arguments;
 	
-	public CompileWorker(IPath path, boolean runAfterCompilation) {
+	public CompileWorker(IPath path, String pathToCompiler, String arguments, boolean compileOnly) {
 		this.path = path;
 		this.console = Console.getConsole("Shadow Build", false);
-		this.runAfterCompilation = runAfterCompilation;
+		this.pathToCompiler = pathToCompiler;
+		this.arguments = arguments;
+		this.compileOnly = compileOnly;
 	}	
 
 	@Override
@@ -47,19 +49,16 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		// if we're running after compilation
 		// and executable is newer than changes to file, there's no need to recompile
 		// (unless some other file has changed, which we are not worrying about yet)
-		if( runAfterCompilation && Files.exists(pathFile) && Files.exists(executableFile) &&
+		if( !compileOnly && Files.exists(pathFile) && Files.exists(executableFile) &&
 			Files.getLastModifiedTime(pathFile).compareTo(Files.getLastModifiedTime(executableFile)) <= 0 )
 			return 0;		
 		
 		String cmd = "java";
-		IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
-				.getPreferenceStore();
-		String pathToJar = preferenceStore.getString("PATH");
-		
-		if( pathToJar == null || !pathToJar.toLowerCase().endsWith(".jar") || !Files.exists(Paths.get(pathToJar)) ) {			
+	
+		if( pathToCompiler == null || !pathToCompiler.toLowerCase().endsWith(".jar") || !Files.exists(Paths.get(pathToCompiler)) ) {			
 			IOConsoleOutputStream stream = console.getError();			
 			try {
-				stream.write("Cannot compile: Invalid path to shadow.jar set in Shadow plug-in preferences\n");
+				stream.write("Cannot compile: Invalid path to shadow.jar specified.\nCheck Shadow plug-in preferences.");
 				stream.flush();				
 			} 
 			catch (IOException e) 
@@ -79,8 +78,11 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		ArrayList<String> inputArgs = new ArrayList<String>();
 		inputArgs.add(cmd);
 		inputArgs.add("-jar");
-		inputArgs.add(pathToJar);
+		inputArgs.add(pathToCompiler);
 		inputArgs.add(pathName);
+		arguments = arguments.trim();
+		if( !arguments.isEmpty() )
+			inputArgs.addAll(Arrays.asList(arguments.split("\\s+")));
 		
 		int value = runProcess(inputArgs, console);
 		
@@ -101,7 +103,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
     public void done() {		
 		console.markTerminated();		
 		try {
-			if(runAfterCompilation && get() == 0) {
+			if(!compileOnly && get() == 0) {
 				String osName = System.getProperty("os.name").toLowerCase();
 				ArrayList<String> inputArgs = new ArrayList<String>();
 				String executableName = executable.toString(); 

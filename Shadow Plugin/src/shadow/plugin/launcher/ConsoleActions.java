@@ -3,7 +3,6 @@ package shadow.plugin.launcher;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleConstants;
@@ -14,9 +13,7 @@ import org.eclipse.ui.part.IPageSite;
 public class ConsoleActions implements IConsolePageParticipant {
 
     private IPageBookViewPage page;
-    //private Action remove, removeAll, terminate;
     private IActionBars bars;
-    //private IConsole console;
 
     @Override
     public void init(final IPageBookViewPage page, final IConsole consoleInterface) {
@@ -26,8 +23,7 @@ public class ConsoleActions implements IConsolePageParticipant {
         this.bars = site.getActionBars();
     	
     	if( consoleInterface instanceof Console ) {
-    		Console console = (Console) consoleInterface;
-	                
+    		Console console = (Console) consoleInterface;	                
 	
 	        Action terminate = console.getTerminate();        
 	        Action remove = console.getRemove();
@@ -55,8 +51,6 @@ public class ConsoleActions implements IConsolePageParticipant {
 
     @Override
     public void dispose() {
-        //remove= null;
-        //terminate = null;
         bars = null;
         page = null;
     }
@@ -68,21 +62,18 @@ public class ConsoleActions implements IConsolePageParticipant {
 
     @Override
     public void activated() {
-        updateVis();
+        updateVisibility();
     }
 
     @Override
     public void deactivated() {
-        updateVis();
+        updateVisibility();
     }
 
-    private void updateVis() {
+    private void updateVisibility() {
 
         if (page == null)
             return;
-        //boolean isEnabled = true;
-        //terminate.setEnabled(isEnabled);
-        //remove.setEnabled(isEnabled);
         bars.updateActionBars();
     }
 

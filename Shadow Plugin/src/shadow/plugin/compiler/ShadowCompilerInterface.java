@@ -24,6 +24,7 @@ import org.eclipse.ui.texteditor.MarkerUtilities;
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.outline.ShadowLabel;
 import shadow.plugin.outline.ShadowOutlineError;
+import shadow.plugin.preferences.PreferencePage;
 
 
 public class ShadowCompilerInterface {
@@ -50,7 +51,7 @@ public class ShadowCompilerInterface {
 		try {						
 			IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
 					.getPreferenceStore();
-			String pathToJar = preferenceStore.getString("PATH");			
+			String pathToJar = preferenceStore.getString(PreferencePage.COMPILER_PATH);			
 
 			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };			
 

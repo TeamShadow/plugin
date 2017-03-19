@@ -1,15 +1,12 @@
 package shadow.plugin.launcher;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
@@ -230,14 +227,23 @@ public class Console extends IOConsole {
 
 		output = newOutputStream();
 		error = newOutputStream();
-		error.setColor(new Color(null, 255, 0, 0));
+		
+		this.acceptsInput = acceptsInput;		
 
-		if( acceptsInput ) {
-			input = getInputStream();
-			input.setColor(new Color(null, 0, 255, 0));
-		}
-
-		this.acceptsInput = acceptsInput;
+		if( acceptsInput )
+			input = getInputStream();		
+		
+		Display.getDefault().asyncExec(				
+				new Runnable() {
+					@Override
+					public void run() {
+						error.setColor(Display.getDefault().getSystemColor(SWT.COLOR_RED));
+						if( acceptsInput )
+							input.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
+						
+					}					
+				}				
+				);		
 	}
 
 	public IOConsoleOutputStream getOutput() {
@@ -254,7 +260,7 @@ public class Console extends IOConsole {
 
 	@Override
 	public void dispose() {
-		super.dispose();
+		super.dispose();		
 
 		if( process != null ) {
 			process.destroy();
