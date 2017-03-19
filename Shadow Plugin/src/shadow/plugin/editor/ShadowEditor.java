@@ -92,8 +92,14 @@ extends TextEditor
 		setAction("DefineFoldingRegion", a);
 	}
 	
-	private void updateErrors() {		
-		ShadowPlugin.getDefault().getCompilerInterface().compile((FileEditorInput)getEditorInput());		
+	private void updateErrors() {			
+		//run updates in another thread for better responsiveness
+		new Thread() {
+			@Override
+			public void run() {
+				ShadowPlugin.getDefault().getCompilerInterface().compile((FileEditorInput)getEditorInput());
+			}
+		}.start();
 	}
 
 	@Override
