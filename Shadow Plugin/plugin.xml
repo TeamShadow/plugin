@@ -72,7 +72,17 @@
 	            icon="icons/shadow.png">
 	    </launchConfigurationTypeImage>
 	</extension>
-   
+	     
+     <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            properties="canLaunchAsShadow"
+            namespace="shadow.plugin.launcher"
+            type="org.eclipse.ui.part.FileEditorInput"
+            class="shadow.plugin.launcher.ShadowLaunchPropertyTester"
+            id="shadow.plugin.launcher.ShadowLaunchPropertyTester">
+      </propertyTester>
+   </extension>
    
    <extension
 	    point="org.eclipse.debug.ui.launchShortcuts">
@@ -88,10 +98,15 @@
 	                <with variable="selection">
 	                    <count value="1"/>
 	                    <iterate>
-		                     <instanceof value="org.eclipse.core.resources.IFile"/>
-		                     <test
-		                           value="*.shadow"
-		                           property="org.eclipse.debug.ui.matchesPattern"/>
+	                    	<or>
+		                    	<and>
+				                     <instanceof value="org.eclipse.core.resources.IFile"/>
+				                     <test
+				                           value="*.shadow"
+				                           property="org.eclipse.debug.ui.matchesPattern"/>
+			                    </and>		                    
+			                    <test property="shadow.plugin.launcher.canLaunchAsShadow"/>
+		                    </or>
                   		</iterate>
 	                </with>
 	            </enablement>
@@ -109,10 +124,15 @@
 	                <with variable="selection">
 	                    <count value="1"/>
 	                    <iterate>
-		                     <instanceof value="org.eclipse.core.resources.IFile"/>
-		                     <test
-		                           value="*.shadow"
-		                           property="org.eclipse.debug.ui.matchesPattern"/>
+		                     <or>
+		                    	<and>
+				                     <instanceof value="org.eclipse.core.resources.IFile"/>
+				                     <test
+				                           value="*.shadow"
+				                           property="org.eclipse.debug.ui.matchesPattern"/>
+			                    </and>		                    
+			                    <test property="shadow.plugin.launcher.canLaunchAsShadow"/>
+		                    </or>
                   		</iterate>
 	                </with>
 	            </enablement>

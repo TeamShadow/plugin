@@ -162,7 +162,7 @@ extends TextEditor
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getAdapter(Class<T> required)
+	public Object getAdapter(Class required)
 	{
 		if (IContentOutlinePage.class.equals(required))
 		{
@@ -172,13 +172,13 @@ extends TextEditor
 			if (this.outline == null) {
 				this.outline = new ShadowOutline(this);
 			}
-			return (T)this.outline;
+			return this.outline;
 		}
 
 		if (projectionSupport != null) {
 			Object adapter= projectionSupport.getAdapter(getSourceViewer(), required);
 			if (adapter != null)
-				return (T)adapter;
+				return adapter;
 		}
 
 		return super.getAdapter(required);
