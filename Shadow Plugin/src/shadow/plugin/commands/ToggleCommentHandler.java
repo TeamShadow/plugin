@@ -5,12 +5,15 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler;
 
+import shadow.plugin.editor.ShadowEditor;
+
 
 public class ToggleCommentHandler extends AbstractHandler implements IHandler {
 	
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		// TODO Auto-generated method stub
+		ShadowEditor editor = (ShadowEditor)ShadowEditor.getActiveEditor();
+		editor.getShadowSourceViewer().toggleComment();
 		return null;
 	}
 }
