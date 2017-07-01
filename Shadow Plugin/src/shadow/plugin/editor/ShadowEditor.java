@@ -28,6 +28,11 @@ import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -83,6 +88,20 @@ extends TextEditor
 	private ShadowOutline outline;	
 	private ProjectionSupport projectionSupport;
 	private ProjectionAnnotationModel annotationModel;
+	
+	public static IEditorPart getActiveEditor() {
+		IWorkbench wb = PlatformUI.getWorkbench();
+		IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+
+		if(window != null) {
+			IWorkbenchPage page = window.getActivePage();
+			if(page != null)
+				return page.getActiveEditor();
+		}
+		
+		return null;
+	}
+	
 		
 	@Override
 	protected void createActions() {
@@ -238,6 +257,11 @@ extends TextEditor
 
 	   oldAnnotations = annotations;
 	}
+	
+	
+	public ISourceViewer getShadowSourceViewer() {
+		return super.getSourceViewer();
+	}
 
 	@Override
 	protected void adjustHighlightRange(int offset, int length) {
@@ -247,6 +271,9 @@ extends TextEditor
 			extension.exposeModelRange(new Region(offset, length));
 		}
 	}
+	
+	
+	public final static String SOURCE_MENU_ID = ShadowPlugin.PLUGIN_ID + ".menu.sourceMenu";	
 	
 	public final static String EDITOR_MATCHING_BRACKETS = "matchingBrackets";
 	public final static String EDITOR_MATCHING_BRACKETS_COLOR= "matchingBracketsColor";

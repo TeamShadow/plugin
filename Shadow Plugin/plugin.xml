@@ -160,5 +160,60 @@
    		<attribute name="message" />
    		<attribute name="location" />
    	</extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution            
+            locationURI="menu:org.eclipse.ui.main.menu?after=edit">
+         <menu
+               id="shadow.plugin.editor.menu.source"
+               label="&amp;Source">
+            <dynamic id="source"
+                  class="shadow.plugin.editor.SourceMenuItems"/>
+         </menu>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="shadow.plugin.commands.RemovedUnusedImportsHandler"
+            description="Removes unused imports from the list of imports"
+            id="shadow.plugin.commands.removeUnusedImports"
+            name="Remove Unused Imports">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.ToggleCommentHandler"
+            description="Comments/uncomments the current selection or the current source line"
+            id="shadow.plugin.commands.toggleComment"
+            name="Toggle Comment">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.AddBlockCommentHandler"
+            description="Comments the current selection"
+            id="shadow.plugin.commands.addBlockComment"
+            name="Add Block Comment">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.CorrectIndentationHandler"
+            description="Corrects indentation within the current selection"
+            id="shadow.plugin.commands.correctIndentation"
+            name="Correct Indentation">
+      </command>
+      <command
+            description="Corrects indentation within the current selection"
+            id="shadow.plugin.commands.correctIndentation"
+            name="Correct Indentation">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.RemoveBlockCommentHandler"
+            description="Uncomments the current selection"
+            id="shadow.plugin.commands.removeBlockComment"
+            name="Remove Block Comment">
+      </command>
+      <command
+            description="Uncomments the current selection"
+            id="shadow.plugin.commands.removeBlockComment"
+            name="Remove Block Comment">
+      </command>
+   </extension>
    
 </plugin>

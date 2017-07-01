@@ -46,6 +46,7 @@ public class ShadowCompilerInterface {
 	private Method columnEndMethod;
 	private Method startCharacterMethod;
 	private Method stopCharacterMethod;
+	private boolean initialized = false;
 
 	public ShadowCompilerInterface() {		
 		try {						
@@ -74,10 +75,15 @@ public class ShadowCompilerInterface {
 			columnEndMethod = shadowExceptionClass.getMethod("columnEnd");
 			startCharacterMethod = shadowExceptionClass.getMethod("startCharacter");
 			stopCharacterMethod = shadowExceptionClass.getMethod("stopCharacter");
+			initialized = true;
 		}
 		catch (ClassNotFoundException | MalformedURLException | NoSuchMethodException | SecurityException e) {			
 			shadowParserClass = contextClass = null;
 		}
+	}
+	
+	public boolean isInitialized() {
+		return initialized;
 	}
 	
 	public class Tree {  
