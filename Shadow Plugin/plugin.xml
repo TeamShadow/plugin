@@ -199,21 +199,37 @@
             name="Correct Indentation">
       </command>
       <command
-            description="Corrects indentation within the current selection"
-            id="shadow.plugin.commands.correctIndentation"
-            name="Correct Indentation">
-      </command>
-      <command
-            defaultHandler="shadow.plugin.commands.RemoveBlockCommentHandler"
-            description="Uncomments the current selection"
-            id="shadow.plugin.commands.removeBlockComment"
-            name="Remove Block Comment">
-      </command>
-      <command
+      		defaultHandler="shadow.plugin.commands.RemoveBlockCommentHandler"
             description="Uncomments the current selection"
             id="shadow.plugin.commands.removeBlockComment"
             name="Remove Block Comment">
       </command>
    </extension>
-   
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="shadow.plugin.commands.correctIndentation"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+I">
+      </key>
+       <key
+            commandId="shadow.plugin.commands.toggleComment"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+/">
+      </key>
+       <key
+            commandId="shadow.plugin.commands.addBlockComment"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+M2+/">
+      </key>
+      <key
+            commandId="shadow.plugin.commands.removeBlockComment"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+M2+\">
+      </key>
+   </extension>   
 </plugin>
