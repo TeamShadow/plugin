@@ -5,13 +5,15 @@
 
 package shadow.plugin.editor;
 
+import java.util.regex.Pattern;
+
 import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.DocumentRewriteSession;
 import org.eclipse.jface.text.DocumentRewriteSessionType;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension4;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.source.IOverviewRuler;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
@@ -19,6 +21,9 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 
 public class ShadowSourceViewer extends ProjectionViewer {
+	
+	private static final Pattern ONE_LINER = Pattern.compile("\\s*(if|for|while|do|foreach|switch|case)\\s*\\(.*\\)\\s*"); 
+	
 	
 	private IAutoEditStrategy autoEditStrategy;
 
@@ -64,6 +69,18 @@ public class ShadowSourceViewer extends ProjectionViewer {
 			}
 		}
 	}
+	
+	private String getLineAfterTabs(String line) {
+		for( int i = 0; i < line.length(); ) {			
+			int c = line.codePointAt(i);
+			if (c != ' ' && c != '\t')
+				return line.substring(i);			
+
+			i += Character.charCount(c);			
+		}
+		return "";
+	}
+	
 
 	private boolean lookingAtLineEnd(IDocument doc, int pos) {
 		String[] legalLineTerms = doc.getLegalLineDelimiters();
@@ -82,39 +99,97 @@ public class ShadowSourceViewer extends ProjectionViewer {
 		return false;
 	}
 
-	public int correctSourceIndentation(int selStart, int selLen, 
+	public void correctSourceIndentation(int selStart, int selLen, 
 			IDocument doc)
 					throws BadLocationException {
 		int selEnd = selStart + selLen;
 		int startLine = doc.getLineOfOffset(selStart);
 		int endLine = doc.getLineOfOffset(selEnd);
-
+	
 		// If the selection extends just to the beginning of the next line, don't indent that one too
 		if (selLen > 0 && 
 				lookingAtLineEnd(doc, selEnd)) {
 			endLine--;
 		}
-
-		int endOffset = selStart+selLen-1;
-		// Indent each line using the AutoEditStrategy
-		for (int line=startLine; line<=endLine; line++) {
-			int lineStartOffset = doc.getLineOffset(line);
-
-			// Replace the existing indentation with the desired indentation.
-			// Use the language-specific AutoEditStrategy, which requires a DocumentCommand.
-			DocumentCommand cmd = new DocumentCommand() { };
-			cmd.offset = lineStartOffset;
-			cmd.length = 0;
-			cmd.text = Character.toString('\t');
-			cmd.doit = true;
-			cmd.shiftsCaret = false;
-			autoEditStrategy.customizeDocumentCommand(doc, cmd);
-			if (cmd.text!=null) {
-				doc.replace(cmd.offset, cmd.length, cmd.text);
-				endOffset += cmd.text.length()-cmd.length;
-			}
+		
+		int tabLevel = 0;
+		int previousLine = startLine - 1;
+		boolean lastIsOneLiner = false;
+		
+		
+		//find initial tab level
+		boolean keepLooking = true;
+		while( previousLine >= 0 && keepLooking ) {
+			IRegion region = doc.getLineInformation(previousLine);
+			String text = doc.get(region.getOffset(), region.getLength());
+			if( !text.trim().isEmpty() ) {
+				text = text.replace("    ", "\t");
+				lastIsOneLiner = ONE_LINER.matcher(text).matches();
+				for( int i = 0; i < text.length() && keepLooking; ) {
+				   final int codepoint = text.codePointAt(i);
+				   if( codepoint == '\t' )
+						tabLevel++;
+					else if( !Character.isWhitespace(codepoint) )
+						keepLooking = false;
+				   i += Character.charCount(codepoint);
+				}
+				
+				int braceChange = getBraceChange(text);				
+				tabLevel += lastIsOneLiner ? braceChange + 1 : braceChange;				
+				
+				keepLooking = false;				
+			}	
+			
+			previousLine--;
 		}
-		return endOffset;
+
+		for( int line = startLine; line <= endLine; line++ ) {
+			int offset = doc.getLineOffset(line);
+			int length = doc.getLineLength(line);
+			String lineText = doc.get(offset, length);
+			
+			if( !lineText.trim().isEmpty() ) {			
+				int braceChange = getBraceChange(lineText);
+				StringBuffer buffer = new StringBuffer();
+				String afterTabs = getLineAfterTabs(lineText);
+				if( afterTabs.startsWith("}")) {
+					tabLevel--;
+					braceChange++;
+				}
+				else if( afterTabs.startsWith("{") && lastIsOneLiner  )
+					tabLevel--;
+				
+				for( int i = 0; i < tabLevel; ++i )
+					buffer.append('\t');
+				buffer.append(afterTabs);
+				String newLine = buffer.toString();
+				if( !newLine.equals(lineText) )
+					doc.replace(offset, length, newLine );
+				
+				if( ONE_LINER.matcher(lineText).matches() ) {
+					tabLevel++;
+					lastIsOneLiner = true;
+				}
+				else {
+					tabLevel += lastIsOneLiner ? braceChange - 1 : braceChange;
+					lastIsOneLiner = false;
+				}
+			}
+		}		
+	}
+	
+	// x coordinate is left braces and y coordinate is right braces
+	private int getBraceChange(String text) {
+		int braceChange = 0;
+		for( int i = 0; i < text.length(); ) {
+		   final int codepoint = text.codePointAt(i);
+		   if( codepoint == '{' )
+				braceChange++;
+			else if( codepoint == '}' )
+				braceChange--;
+		   i += Character.charCount(codepoint);
+		}
+		return braceChange;
 	}
 
 
