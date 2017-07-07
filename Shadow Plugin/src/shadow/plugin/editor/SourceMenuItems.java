@@ -50,8 +50,7 @@ public class SourceMenuItems extends CompoundContributionItem {
     	
     	ShadowEditor shadowEditor = (ShadowEditor) editor;
     	Point selection = shadowEditor.getShadowSourceViewer().getSelectedRange();
-    	boolean isSelected = selection.y > 0;
-    	ShadowCompilerInterface compiler = new ShadowCompilerInterface();
+    	boolean isSelected = selection.y > 0;    	
         return new IContributionItem[] {
         		 new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.toggleComment", 
                          "Toggle &Comment", 
@@ -75,7 +74,7 @@ public class SourceMenuItems extends CompoundContributionItem {
                 new Separator(),
                 new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.removeUnusedImports", 
                         "Remove &Unused Imports", 
-                        compiler.isInitialized())
+                        true)
                
         };
     }
