@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<component id="Shadow Plugin" version="2">
+    <resource path="src/shadow/plugin/editor/ShadowSourceViewer.java" type="shadow.plugin.editor.ShadowSourceViewer">
+        <filter id="571473929">
+            <message_arguments>
+                <message_argument value="ProjectionViewer"/>
+                <message_argument value="ShadowSourceViewer"/>
+            </message_arguments>
+        </filter>
+    </resource>
+</component>

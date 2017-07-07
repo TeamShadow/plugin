@@ -45,7 +45,7 @@ import shadow.plugin.outline.ShadowOutline;
 
 public class ShadowEditor
 extends TextEditor
-{
+{	
 	private class DefineFoldingRegionAction extends TextEditorAction {
 
 		public DefineFoldingRegionAction(ResourceBundle bundle, String prefix, ITextEditor editor) {

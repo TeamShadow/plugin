@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentRewriteSession;
 import org.eclipse.jface.text.DocumentRewriteSessionType;
-import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension4;
 import org.eclipse.jface.text.IRegion;
@@ -22,15 +21,10 @@ import org.eclipse.swt.widgets.Composite;
 
 public class ShadowSourceViewer extends ProjectionViewer {
 	
-	private static final Pattern ONE_LINER = Pattern.compile("\\s*(if|for|while|do|foreach|switch|case)\\s*\\(.*\\)\\s*"); 
-	
-	
-	private IAutoEditStrategy autoEditStrategy;
+	private final Pattern ONE_LINER = Pattern.compile("\\s*(if|for|while|do|foreach|switch|case)\\s*\\(.*\\)\\s*"); 
 
 	public ShadowSourceViewer(Composite parent, IVerticalRuler ruler, IOverviewRuler overviewRuler, boolean showsAnnotationOverview, int styles) {
-		super(parent, ruler, overviewRuler, showsAnnotationOverview, styles);
-		
-		autoEditStrategy = new ShadowAutoIndentStrategy();
+		super(parent, ruler, overviewRuler, showsAnnotationOverview, styles);	
 	}
 
 	public void correctIndentation() {
