@@ -1,6 +1,5 @@
 package shadow.plugin.outline;
 
-import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.viewers.ISelection;
@@ -10,15 +9,10 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.views.contentoutline.ContentOutlinePage;
 
-import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.ShadowCompilerInterface;
+import shadow.plugin.compiler.Tree;
 
 public class ShadowOutline
 extends ContentOutlinePage
@@ -44,11 +38,9 @@ extends ContentOutlinePage
 	public void update()
 	{
 		TreeViewer viewer = getTreeViewer();
-		if (viewer != null)
-		{
+		if (viewer != null) {
 			Control control = viewer.getControl();
-			if ((control != null) && (!control.isDisposed()))
-			{
+			if ((control != null) && (!control.isDisposed())) {
 				control.setRedraw(false);
 				
 				IEditorInput input = editor.getEditorInput();
@@ -58,40 +50,26 @@ extends ContentOutlinePage
 		}
 	}
 
-	public void selectionChanged(SelectionChangedEvent event)
-	{
+	public void selectionChanged(SelectionChangedEvent event) {
 		super.selectionChanged(event);
-		try
-		{
+		try {
 			ISelection selection = event.getSelection();
 			if (!selection.isEmpty()) {
 				Object element = ((IStructuredSelection)selection).getFirstElement();
-				int column;
-				int line;
+				int column = 0;
+				int line = 1;
 				int length = 1;
 
 				if ((element instanceof ShadowOutlineError)) {
 					ShadowOutlineError error = (ShadowOutlineError)element;
 					line = error.getLine();
 					column = error.getColumn();
-
-					if( !error.hasError() ) {
-						IWorkbench wb = PlatformUI.getWorkbench();
-						IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
-
-						PreferenceDialog dialog = 
-								PreferencesUtil.createPreferenceDialogOn(window.getShell(), 
-										"shadow.plugin.preferences.PreferencePage", null, null);
-						if (dialog != null)
-							dialog.open();
-					}
 				}
-				else
-				{
-					ShadowCompilerInterface compiler = ShadowPlugin.getDefault().getCompilerInterface();
-					line = compiler.getLine(element);
-					column = compiler.getColumn(element);
-					length = compiler.getLength(element);
+				else if( element instanceof Tree ) {
+					Tree tree = (Tree) element;
+					line = tree.lineStart();
+					column = tree.columnStart();
+					length = tree.getLength();
 				}
 				IDocument doc = this.editor.getDocumentProvider().getDocument(this.editor.getEditorInput());
 				int offset = doc.getLineOffset(line - 1) + column;

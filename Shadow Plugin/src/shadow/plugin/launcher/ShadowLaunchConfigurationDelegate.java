@@ -1,5 +1,7 @@
 package shadow.plugin.launcher;
 
+import java.nio.file.Paths;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -48,9 +50,13 @@ public class ShadowLaunchConfigurationDelegate implements ILaunchConfigurationDe
     }
 
     public static String getDefaultCompiler() {
-    	IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
-				.getPreferenceStore();
-		return preferenceStore.getString(shadow.plugin.preferences.PreferencePage.COMPILER_PATH);
+    	String pathToCompiler = System.getenv("SHADOW_HOME");    	
+		String compiler = "shadowc";			
+			
+		if( pathToCompiler != null && !pathToCompiler.trim().isEmpty())				
+			compiler = Paths.get(pathToCompiler, compiler).toString();    	
+    	
+		return compiler;
     }
     
     public static IProject getProject() {

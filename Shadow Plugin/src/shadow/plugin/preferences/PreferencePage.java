@@ -11,7 +11,7 @@ import shadow.plugin.ShadowPlugin;
 public class PreferencePage extends FieldEditorPreferencePage  implements IWorkbenchPreferencePage {
 
 	private static PreferencePage page;
-	public static final String COMPILER_PATH = "shadow.plugin.preferences.PreferencePage.CompilerPath";
+	public static final String CONFIGURATION_PATH = "shadow.plugin.preferences.PreferencePage.ConfigurationPath";
 	
 	public PreferencePage() {
 		super(FieldEditorPreferencePage.GRID);
@@ -34,8 +34,10 @@ public class PreferencePage extends FieldEditorPreferencePage  implements IWorkb
 
 	@Override
 	protected void createFieldEditors() {
-		addField(new FileFieldEditor(COMPILER_PATH, "&Path to shadow.jar:",
-		        getFieldEditorParent()));
+		FileFieldEditor field = new FileFieldEditor(CONFIGURATION_PATH, "&Path to configuration file:",
+		        getFieldEditorParent());
+		field.getTextControl(getFieldEditorParent()).setToolTipText("Setting the path to a configuration file should be unnecessary if the SHADOW_HOME environment variable is correctly set.  Shadow developers working on the standard library should use a configuration file that specifies the location of the standard library they are updating; otherwise, errors about duplicate copies of standard library source files will be reported."); 
+		addField(field);
 	}
 
 	@Override

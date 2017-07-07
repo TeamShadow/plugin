@@ -5,13 +5,14 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.ShadowCompilerInterface.Tree;
+import shadow.plugin.compiler.Tree;
 
 public class ShadowContentProvider
   implements ITreeContentProvider
 {
   private Object root = null;
   
+  @Override
   public void inputChanged(Viewer viewer, Object oldInput, Object newInput)
   {
 	  if( newInput != null )	  
@@ -20,6 +21,7 @@ public class ShadowContentProvider
 		  root = null;
   }
   
+  @Override
   public Object[] getElements(Object input)
   {
 	  if( root == null )
@@ -31,6 +33,7 @@ public class ShadowContentProvider
 	  return new Object[] { root };
   }
   
+  @Override
   public Object getParent(Object element)
   {
 	 if( element instanceof Tree )
@@ -39,6 +42,7 @@ public class ShadowContentProvider
 	 return element;
   }
   
+  @Override
   public boolean hasChildren(Object element)
   {
 	  if( element instanceof Tree )
@@ -47,6 +51,7 @@ public class ShadowContentProvider
 	  return false;
   }
   
+  @Override
   public Object[] getChildren(Object element)
   {
 	if( element instanceof Tree )
@@ -55,5 +60,6 @@ public class ShadowContentProvider
 	return new Object[] { element };
   }
   
-  public void dispose() {}
+  @Override
+  public void dispose() { }
 }

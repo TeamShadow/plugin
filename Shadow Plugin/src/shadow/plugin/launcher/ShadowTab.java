@@ -233,7 +233,8 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
     		return false;
     	  	
     	java.nio.file.Path compiler = java.nio.file.Paths.get(compilerPath);
-    	if( compiler == null || !Files.exists(compiler) || !compilerText.getText().trim().toLowerCase().endsWith(".jar") )
+    	
+    	if( compiler == null || !Files.exists(compiler) || !java.nio.file.Files.isExecutable(compiler) )
     		return false;
     	
     	return true; 

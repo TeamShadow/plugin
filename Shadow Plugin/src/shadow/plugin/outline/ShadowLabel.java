@@ -6,7 +6,9 @@ public enum ShadowLabel
 {
 	COMPILATION_UNIT("class_obj.gif"),
 	CLASS("class_obj.gif"),
-	CONSTANT("field_public_obj.gif"),
+	PRIVATE_CONSTANT("constant_private_obj.gif"),
+	PROTECTED_CONSTANT("constant_protected_obj.gif"),
+	PUBLIC_CONSTANT("field_public_obj.gif"),
 	ENUM("enum_obj.gif"),
 	EXCEPTION("exception_obj.gif"),
 	ERROR("error_obj.gif"),

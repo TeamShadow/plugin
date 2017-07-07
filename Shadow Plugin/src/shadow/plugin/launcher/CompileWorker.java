@@ -34,42 +34,27 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		this.arguments = arguments;
 		this.compileOnly = compileOnly;
 		this.project = project;
+		
+		String osName = System.getProperty("os.name").toLowerCase();
+		if( osName.contains("windows") )			
+			executable = path.removeFileExtension().addFileExtension("exe");		
+		else						
+			executable = path.removeFileExtension();
 	}	
 
 	@Override
 	protected Integer doInBackground() throws Exception {				
 		String pathName = path.toString();
+		Path pathFile = Paths.get(pathName);			
 		
-		String osName = System.getProperty("os.name").toLowerCase();		
-
-		if(osName.contains("windows"))
-			executable = path.removeFileExtension().addFileExtension("exe");
-		else
-			executable = path.removeFileExtension();
-		
-		Path pathFile = Paths.get(pathName);
-		Path executableFile = Paths.get(executable.toString());		
+		Path executableFile = Paths.get(executable.toString());
 		
 		// if we're running after compilation
 		// and executable is newer than changes to file, there's no need to recompile
 		// (unless some other file has changed, which we are not worrying about yet)
 		if( !compileOnly && Files.exists(pathFile) && Files.exists(executableFile) &&
 			Files.getLastModifiedTime(pathFile).compareTo(Files.getLastModifiedTime(executableFile)) <= 0 )
-			return 0;		
-		
-		String cmd = "java";
-	
-		if( pathToCompiler == null || !pathToCompiler.toLowerCase().endsWith(".jar") || !Files.exists(Paths.get(pathToCompiler)) ) {			
-			IOConsoleOutputStream stream = console.getError();			
-			try {
-				stream.write("Cannot compile: Invalid path to shadow.jar specified.\nCheck Shadow plug-in preferences.");
-				stream.flush();				
-			} 
-			catch (IOException e) 
-			{}			
-						
-			return -1;
-		}
+			return 0;
 					
 		IOConsoleOutputStream stream = console.getOutput();
 		try {
@@ -80,13 +65,14 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		{}
 
 		ArrayList<String> inputArgs = new ArrayList<String>();
-		inputArgs.add(cmd);
-		inputArgs.add("-jar");
 		inputArgs.add(pathToCompiler);
+		inputArgs.add("-v");
 		inputArgs.add(pathName);
 		arguments = arguments.trim();
 		if( !arguments.isEmpty() )
 			inputArgs.addAll(Arrays.asList(arguments.split("\\s+")));
+		
+		System.out.println("Starting compilation");
 		
 		int value = runProcess(inputArgs, console);
 		
@@ -143,7 +129,8 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		// execute the command		
 		Process process = null;
 		try {
-			process = new ProcessBuilder(inputArgs).start();			
+			ProcessBuilder builder = new ProcessBuilder(inputArgs);
+			process = builder.start();			
 			console.setProcess( process );
 
 			new Pipe( process.getInputStream(), console.getOutput() ).start();
