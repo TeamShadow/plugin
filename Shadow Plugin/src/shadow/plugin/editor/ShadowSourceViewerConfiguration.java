@@ -44,7 +44,8 @@ public class ShadowSourceViewerConfiguration
   @Override
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
 		//IAutoEditStrategy strategy= (IDocument.DEFAULT_CONTENT_TYPE.equals(contentType) ? new ShadowAutoIndentStrategy() : new DefaultIndentLineAutoEditStrategy());
-	  IAutoEditStrategy strategy= new DefaultIndentLineAutoEditStrategy();
+	  //IAutoEditStrategy strategy= new DefaultIndentLineAutoEditStrategy();
+	  IAutoEditStrategy strategy= new ShadowAutoIndentStrategy();
 		return new IAutoEditStrategy[] { strategy };
 	}
 	

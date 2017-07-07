@@ -8,16 +8,16 @@ import org.eclipse.jface.text.TextUtilities;
 
 public class ShadowAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 
-	public ShadowAutoIndentStrategy() {
+	public ShadowAutoIndentStrategy() {		
 	}
 
 	@Override
 	public void customizeDocumentCommand(IDocument d, DocumentCommand c) {
-		if (c.length == 0 && c.text != null && endsWithDelimiter(d, c.text))
+		//normal typing		
+		if (c.length == 0 &&  c.text != null && endsWithDelimiter(d, c.text))
 			smartIndentAfterNewLine(d, c);
-		else if ("}".equals(c.text)) {
-			smartInsertAfterBracket(d, c);
-		}
+		else if ("}".equals(c.text))
+			smartInsertAfterBracket(d, c);		
 	}
 
 	/**

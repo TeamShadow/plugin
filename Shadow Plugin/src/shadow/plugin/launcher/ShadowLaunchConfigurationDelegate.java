@@ -20,6 +20,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.ShadowPlugin;
+import shadow.plugin.editor.ShadowEditor;
 
 public class ShadowLaunchConfigurationDelegate implements ILaunchConfigurationDelegate  {
 	
@@ -32,20 +33,11 @@ public class ShadowLaunchConfigurationDelegate implements ILaunchConfigurationDe
     }
 	
 	public static IPath getPath() {
-    	IWorkbench wb = PlatformUI.getWorkbench();
-		IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
-
-		if(window != null) {
-			IWorkbenchPage page = window.getActivePage();
-			if(page != null) {
-				IEditorPart editorPart = page.getActiveEditor();
-				if( editorPart != null ) {
-					IEditorInput input = editorPart.getEditorInput();
-					return ((FileEditorInput)input).getPath();					
-				}
-			}
-		}
-		
+		IEditorPart editorPart = ShadowEditor.getActiveEditor();
+		if( editorPart != null ) {
+			IEditorInput input = editorPart.getEditorInput();
+			return ((FileEditorInput)input).getPath();					
+		}		
 		return null;    	
     }
 
@@ -60,18 +52,10 @@ public class ShadowLaunchConfigurationDelegate implements ILaunchConfigurationDe
     }
     
     public static IProject getProject() {
-    	IWorkbench wb = PlatformUI.getWorkbench();
-		IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
-
-		if(window != null) {
-			IWorkbenchPage page = window.getActivePage();
-			if(page != null) {
-				IEditorPart editorPart = page.getActiveEditor();
-				if( editorPart != null ) {
-					IEditorInput input = editorPart.getEditorInput();
-					return ((FileEditorInput)input).getFile().getProject();					
-				}
-			}
+    	IEditorPart editorPart = ShadowEditor.getActiveEditor();
+		if( editorPart != null ) {
+			IEditorInput input = editorPart.getEditorInput();
+			return ((FileEditorInput)input).getFile().getProject();					
 		}
 		
 		return null;

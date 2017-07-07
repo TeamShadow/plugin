@@ -31,7 +31,7 @@ import shadow.typecheck.ErrorReporter;
 import shadow.typecheck.TypeChecker;
 
 
-public class ShadowCompilerInterface {		
+public class ShadowCompilerInterface {
 	
 	private static String cleanError(String error) {		
 		//exception: (file.shadow) [5:10] or
