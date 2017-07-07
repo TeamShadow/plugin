@@ -50,6 +50,6 @@ public class ShadowCompileShortcut implements ILaunchShortcut {
 	
 	public void runCompiler(IPath path, IProject project) {
 		if( path != null )
-			new CompileWorker(path, ShadowLaunchConfigurationDelegate.getDefaultCompiler(), "", true, project).execute();
+			new CompileWorker(path.makeAbsolute(), ShadowLaunchConfigurationDelegate.getDefaultCompiler(), "", true, project).execute();
 	}
 }

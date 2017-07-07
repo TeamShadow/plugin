@@ -97,14 +97,9 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		console.markTerminated();		
 		try {
 			if(!compileOnly && get() == 0) {
-				String osName = System.getProperty("os.name").toLowerCase();
 				ArrayList<String> inputArgs = new ArrayList<String>();
 				String executableName = executable.toString(); 
-
-				if(osName.contains("windows")) 
-					inputArgs.add(executableName);				
-				else 					
-					inputArgs.add("./" + executableName);
+				inputArgs.add(executableName);				
 						
 				Console programConsole = Console.getConsole(executableName);
 				
