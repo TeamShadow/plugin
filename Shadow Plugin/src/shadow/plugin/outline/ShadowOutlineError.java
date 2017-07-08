@@ -13,7 +13,7 @@ public class ShadowOutlineError extends Exception {
 	}
 	
 	public ShadowOutlineError() {
-		this(0, 0, "Outline unavailable. Click to check path to shadow.jar.");		
+		this(0, 0, "Outline unavailable.");		
 	}
 
 	public boolean hasError() {

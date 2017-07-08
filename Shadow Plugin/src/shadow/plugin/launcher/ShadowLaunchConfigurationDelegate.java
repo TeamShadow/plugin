@@ -62,6 +62,8 @@ public class ShadowLaunchConfigurationDelegate implements ILaunchConfigurationDe
 		String mainFile = configuration.getAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, getPathName() );
 		boolean compileOnly = configuration.getAttribute(ShadowLaunchConfigurationAttributes.COMPILE_ONLY, false );
 		String compiler = configuration.getAttribute(ShadowLaunchConfigurationAttributes.COMPILER, getDefaultCompiler() );
+		if( compiler.trim().isEmpty() )
+			compiler = getDefaultCompiler();
 		String arguments = configuration.getAttribute(ShadowLaunchConfigurationAttributes.ARGUMENTS, "");
 
 		IPath path = new Path(mainFile);		

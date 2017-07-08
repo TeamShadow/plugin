@@ -163,9 +163,8 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
 	 * Open a resource chooser to select a JAR to use as a shadow compiler 
 	 */
 	protected void browseForCompiler() {
-		FileDialog dialog = new FileDialog(getShell());
-		dialog.setFilterExtensions(new String[] { "*.jar"} );
-		dialog.setFileName("shadow.jar");
+		FileDialog dialog = new FileDialog(getShell());		
+		dialog.setFileName("shadowc");
 		
 		String file = dialog.open(); 		
 		if( file != null )			
@@ -231,10 +230,14 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
     	IPath file = new Path(filePath);
     	if( file == null || !file.toFile().exists() || !file.getFileExtension().toLowerCase().equals("shadow") )
     		return false;
+    	
+    	//empty compiler is fine: we'll just try to run shadowc
+    	if( compilerPath == null || compilerPath.trim().isEmpty() )
+    		return true;
     	  	
     	java.nio.file.Path compiler = java.nio.file.Paths.get(compilerPath);
-    	
-    	if( compiler == null || !Files.exists(compiler) || !java.nio.file.Files.isExecutable(compiler) )
+    	    	
+    	if( compiler == null || !java.nio.file.Files.isExecutable(compiler) )
     		return false;
     	
     	return true; 

@@ -7,8 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.SwingWorker;
 
@@ -24,22 +26,47 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	private boolean compileOnly;
 	private IPath executable;
 	private String pathToCompiler;
-	private String arguments;
+	private List<String> arguments;
 	private IProject project;
 	
 	public CompileWorker(IPath path, String pathToCompiler, String arguments, boolean compileOnly, IProject project) {
 		this.path = path;
 		this.console = Console.getConsole("Shadow Build", false);
 		this.pathToCompiler = pathToCompiler;
-		this.arguments = arguments;
+		this.arguments = new ArrayList<String>();
+		
+		//turn whitespace delimited list (which might contain quoted phrases) into a list of strings
+		Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(arguments);
+		String executableName = null;
+		boolean outputFlag = false;
+		while( m.find() ) {
+			String argument = m.group(1).replace("\"", "");			
+		    this.arguments.add(argument);
+		    
+		    if( outputFlag )
+		    	executableName = argument;
+		    
+		    if( argument.equals("-o") || argument.equals("--output") )
+		    	outputFlag = true;
+		    else
+		    	outputFlag = false;
+		}
 		this.compileOnly = compileOnly;
 		this.project = project;
 		
-		String osName = System.getProperty("os.name").toLowerCase();
-		if( osName.contains("windows") )			
-			executable = path.removeFileExtension().addFileExtension("exe");		
-		else						
-			executable = path.removeFileExtension();
+		if( executableName != null ) {			
+			if( Paths.get(executableName).isAbsolute() )			
+				executable = new org.eclipse.core.runtime.Path(executableName);
+			else
+				executable =  path.removeLastSegments(1).append(executableName);
+		}
+		else {
+			String osName = System.getProperty("os.name").toLowerCase();
+			if( osName.contains("windows") )			
+				executable = path.removeFileExtension().addFileExtension("exe");		
+			else						
+				executable = path.removeFileExtension();
+		}
 	}	
 
 	@Override
@@ -65,14 +92,9 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		{}
 
 		ArrayList<String> inputArgs = new ArrayList<String>();
-		inputArgs.add(pathToCompiler);
-		inputArgs.add("-v");
+		inputArgs.add(pathToCompiler);		
 		inputArgs.add(pathName);
-		arguments = arguments.trim();
-		if( !arguments.isEmpty() )
-			inputArgs.addAll(Arrays.asList(arguments.split("\\s+")));
-		
-		System.out.println("Starting compilation");
+		inputArgs.addAll(arguments);		
 		
 		int value = runProcess(inputArgs, console);
 		
@@ -136,7 +158,11 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 			return process.waitFor();			
 		} 
 		catch (IOException | InterruptedException e) {
-			System.err.println("Process failed to run: " + e.getMessage());
+			try {
+				console.getError().write("Process failed to run: " + e.getLocalizedMessage() + System.lineSeparator());
+			} catch (NullPointerException | IOException exception) {
+				System.err.println("Process failed to run: " + e.getLocalizedMessage());
+			}			
 		}
 		finally {
 			if( process != null ) {
