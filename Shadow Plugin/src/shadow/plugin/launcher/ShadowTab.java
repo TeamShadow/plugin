@@ -160,11 +160,14 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
 	}
 	
 	 /**
-	 * Open a resource chooser to select a JAR to use as a shadow compiler 
+	 * Open a resource chooser to select an executable to use as a shadow compiler 
 	 */
 	protected void browseForCompiler() {
-		FileDialog dialog = new FileDialog(getShell());		
-		dialog.setFileName("shadowc");
+		FileDialog dialog = new FileDialog(getShell());
+		if( System.getProperty("os.name").toLowerCase().contains("windows") )
+			dialog.setFileName("shadowc.exe");
+		else
+			dialog.setFileName("shadowc");
 		
 		String file = dialog.open(); 		
 		if( file != null )			
@@ -175,7 +178,7 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
     public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {    	
     	configuration.setAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, ShadowLaunchConfigurationDelegate.getPathName());
 		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILE_ONLY, false);
-		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILER, ShadowLaunchConfigurationDelegate.getDefaultCompiler());
+		configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILER, "");
 		configuration.setAttribute(ShadowLaunchConfigurationAttributes.ARGUMENTS, "");    	
     }
    
@@ -188,7 +191,7 @@ public class ShadowTab extends AbstractLaunchConfigurationTab
 			boolean compileOnly = configuration.getAttribute(ShadowLaunchConfigurationAttributes.COMPILE_ONLY, false);
 			compileOnlyButton.setSelection(compileOnly);
 			
-			String compiler = configuration.getAttribute(ShadowLaunchConfigurationAttributes.COMPILER, ShadowLaunchConfigurationDelegate.getDefaultCompiler());
+			String compiler = configuration.getAttribute(ShadowLaunchConfigurationAttributes.COMPILER, "");
 			compilerText.setText(compiler);
 			
 			String arguments = configuration.getAttribute(ShadowLaunchConfigurationAttributes.ARGUMENTS, "");
