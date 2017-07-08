@@ -171,6 +171,20 @@
                   class="shadow.plugin.editor.SourceMenuItems"/>
          </menu>
       </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.eclipse.ui.popup.any?after=group.edit">
+         <dynamic
+               class="shadow.plugin.editor.SourceMenuItems"
+               id="source">               
+			  <with
+			     variable="activePart">
+			     <instanceof
+			          value="org.eclipse.ui.IEditorPart">
+			     </instanceof>
+			  </with>  
+         </dynamic>
+      </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.commands">
@@ -231,5 +245,5 @@
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="M1+M2+\">
       </key>
-   </extension>   
+   </extension>
 </plugin>

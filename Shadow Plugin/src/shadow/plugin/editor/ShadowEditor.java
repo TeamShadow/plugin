@@ -7,6 +7,7 @@ import java.util.ResourceBundle;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -36,6 +37,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
@@ -58,7 +60,7 @@ extends TextEditor
 
 		@Override
 		public void run() {
-			ITextEditor editor= getTextEditor();
+			ITextEditor editor= getTextEditor();			
 			ISelection selection= editor.getSelectionProvider().getSelection();
 			if (selection instanceof ITextSelection) {
 				ITextSelection textSelection= (ITextSelection) selection;
@@ -94,7 +96,7 @@ extends TextEditor
 		IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
 
 		if(window != null) {
-			IWorkbenchPage page = window.getActivePage();
+			IWorkbenchPage page = window.getActivePage();			
 			if(page != null)
 				return page.getActiveEditor();
 		}
@@ -293,4 +295,11 @@ extends TextEditor
 	    store.setDefault(EDITOR_MATCHING_BRACKETS, true);
 	    store.setDefault(EDITOR_MATCHING_BRACKETS_COLOR, "192,192,192");
 	}
+	
+	@Override
+    protected void editorContextMenuAboutToShow(IMenuManager menu) {
+        super.editorContextMenuAboutToShow(menu);        
+        menu.remove(ITextEditorActionConstants.SHIFT_LEFT);
+        menu.remove(ITextEditorActionConstants.SHIFT_RIGHT);        
+    }	
 }

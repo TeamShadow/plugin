@@ -12,7 +12,6 @@ import org.eclipse.ui.actions.CompoundContributionItem;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.ShadowCompilerInterface;
 
 
 public class SourceMenuItems extends CompoundContributionItem {    
@@ -26,19 +25,14 @@ public class SourceMenuItems extends CompoundContributionItem {
     @Override
     public IContributionItem[] getContributionItems() {
         IContributionItem[] items = getItems(ShadowEditor.getActiveEditor());        
-        if (DynamicMenuItem.collapseMenuItems(getParent())) {
+        if (DynamicMenuItem.isContextMenu(getParent())) {
             MenuManager submenu = new MenuManager("Source");
             submenu.setActionDefinitionId(ShadowEditor.SOURCE_MENU_ID);
             for (IContributionItem item: items) {
                 submenu.add(item);
             }
             return new IContributionItem[] { submenu };
-        }
-        else if (DynamicMenuItem.isContextMenu(getParent())) {
-            IContributionItem[] copy = Arrays.copyOf(items, items.length+1);
-            copy[items.length] = new Separator();
-            return copy;
-        }
+        }        
         else {
             return items;            
         }        
