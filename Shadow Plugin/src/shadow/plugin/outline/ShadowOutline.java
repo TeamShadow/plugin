@@ -29,7 +29,7 @@ extends ContentOutlinePage
 	{
 		super.createControl(parent);
 		TreeViewer viewer = getTreeViewer();		
-		viewer.setContentProvider(new ShadowContentProvider());
+		viewer.setContentProvider(new ShadowContentProvider(editor));
 		viewer.setLabelProvider(new ShadowLabelProvider());		
 		viewer.addSelectionChangedListener(this);
 		update();

@@ -20,6 +20,7 @@ import org.eclipse.ui.texteditor.MarkerUtilities;
 import shadow.Configuration;
 import shadow.ConfigurationException;
 import shadow.Loggers;
+import shadow.Main;
 import shadow.ShadowException;
 import shadow.parse.Context;
 import shadow.parse.ParseChecker;
@@ -27,6 +28,7 @@ import shadow.parse.ParseException;
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.outline.ShadowOutlineError;
 import shadow.plugin.preferences.PreferencePage;
+import shadow.tac.TACBuilder;
 import shadow.typecheck.ErrorReporter;
 import shadow.typecheck.TypeChecker;
 
@@ -54,12 +56,12 @@ public class ShadowCompilerInterface {
 		return error.trim();		
 	}
 	
-	public Object buildOutline(FileEditorInput newInput) { 
+	public Object buildOutline(FileEditorInput newInput, IDocument document) { 
 		Path inputPath = newInput.getPath().toFile().toPath();
 		ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
 	 	ParseChecker checker = new ParseChecker(reporter);
 	 	try{
-	 		Context compilationUnit = checker.getCompilationUnit(inputPath);
+	 		Context compilationUnit = checker.getCompilationUnit(document.get(), inputPath);
 	 		TreeBuilder maker = new TreeBuilder();
 	 		return maker.makeTree(compilationUnit);
 	 	}
@@ -72,17 +74,12 @@ public class ShadowCompilerInterface {
 	}	
 	
 	
-	public void typeCheck(FileEditorInput newInput, IDocument document) {
+	public  synchronized void typeCheck(FileEditorInput newInput, IDocument document) {
 		
 		Path inputPath = newInput.getPath().toFile().toPath();
 		IFile inputIFile = newInput.getFile();
 
-		// delete all of the existing IMarkers.
-		try {
-			inputIFile.deleteMarkers(null, true, IResource.DEPTH_INFINITE);
-		}
-		catch (CoreException e)
-		{}		
+				
 		
 		try {		
 			IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
@@ -92,14 +89,29 @@ public class ShadowCompilerInterface {
 				configurationPath = System.getenv("SHADOW_HOME");
 			Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
 			ErrorReporter reporter = new ErrorReporter(Loggers.TYPE_CHECKER);
-			try {
-				TypeChecker.typeCheck(inputPath, false, reporter);
+			try {				
+				Context node = TypeChecker.typeCheck(document.get(), inputPath, reporter);
+				if( reporter.getErrorList().size() == 0 )
+					Main.optimizeTAC(new TACBuilder().build(node), reporter, true);
 			}
 			catch(ParseException e) {
+				// delete all of the existing IMarkers.
+				try {
+					inputIFile.deleteMarkers(null, true, IResource.DEPTH_INFINITE);
+				}
+				catch (CoreException exception)
+				{}
 				listErrors( Arrays.asList(e), inputIFile, IMarker.SEVERITY_ERROR, document );
 				return;
 			}
 			catch(ShadowException e) {}
+			
+			// delete all of the existing IMarkers.
+			try {
+				inputIFile.deleteMarkers(null, true, IResource.DEPTH_INFINITE);
+			}
+			catch (CoreException e)
+			{}			
 			List<ShadowException> errorList = reporter.getErrorList();
 			List<ShadowException> warningList = reporter.getWarningList();		
 			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );

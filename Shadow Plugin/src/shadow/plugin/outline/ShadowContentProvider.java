@@ -3,6 +3,7 @@ package shadow.plugin.outline;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipse.ui.texteditor.ITextEditor;
 
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.compiler.Tree;
@@ -11,12 +12,18 @@ public class ShadowContentProvider
   implements ITreeContentProvider
 {
   private Object root = null;
+  private ITextEditor editor;
+  
+  
+  public ShadowContentProvider(ITextEditor editor) {
+	  this.editor = editor;
+  }
   
   @Override
   public void inputChanged(Viewer viewer, Object oldInput, Object newInput)
-  {
+  {  
 	  if( newInput != null )	  
-		  root = ShadowPlugin.getDefault().getCompilerInterface().buildOutline((FileEditorInput) newInput);
+		  root = ShadowPlugin.getDefault().getCompilerInterface().buildOutline((FileEditorInput) newInput, editor.getDocumentProvider().getDocument(newInput));
 	  else
 		  root = null;
   }

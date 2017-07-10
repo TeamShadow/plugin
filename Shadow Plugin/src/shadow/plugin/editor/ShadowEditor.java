@@ -10,8 +10,10 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension3;
+import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.text.Position;
@@ -30,6 +32,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IPropertyListener;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -43,6 +46,7 @@ import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 import shadow.plugin.ShadowPlugin;
+import shadow.plugin.compiler.TypeCheckScheduler;
 import shadow.plugin.outline.ShadowOutline;
 
 public class ShadowEditor
@@ -85,11 +89,68 @@ extends TextEditor
 			}
 		}
 	}
+	
+	private class DocumentListener implements IDocumentListener {
+		private IDocument document;
+		
+		public DocumentListener(IDocument document) {
+			this.document = document;
+		}
+		
+		public void documentAboutToBeChanged(DocumentEvent event) {	            
+        }
+        public void documentChanged(DocumentEvent event) {
+            synchronized (ShadowEditor.this) {
+            	scheduleParsing();
+            }
+        }
+        
+        public IDocument getDocument() {
+        	return document;
+        }
+        
+        
+        public void setDocument(IDocument document) {
+        	this.document = document;
+        }
+	}
+	
+	private DocumentListener documentListener;
+	    
+    private IPropertyListener editorInputPropertyListener = 
+            new IPropertyListener() {
+        public void propertyChanged(Object source, int propId) {
+            if (source == ShadowEditor.this && 
+                    propId == IEditorPart.PROP_INPUT && documentListener != null) {
+                IDocument oldDoc =
+                        documentListener.getDocument();
+                IDocument newDoc = 
+                        getDocumentProvider()
+                            .getDocument(getEditorInput()); 
+                if( newDoc != oldDoc ) {
+                    // Need to unwatch the old document 
+                    // and watch the new document
+                    if( oldDoc != null )
+                        oldDoc.removeDocumentListener(documentListener);
+                    
+                    
+                    documentListener.setDocument(newDoc);
+                    
+                    newDoc.addDocumentListener(
+                            documentListener);
+                }
+                
+                scheduleParsing();
+            }
+        }
+    };
 
+    private static final int TYPECHECK_SCHEDULE_DELAY = 500;
 
 	private ShadowOutline outline;	
 	private ProjectionSupport projectionSupport;
 	private ProjectionAnnotationModel annotationModel;
+	private TypeCheckScheduler typeCheckScheduler;
 	
 	public static IEditorPart getActiveEditor() {
 		IWorkbench wb = PlatformUI.getWorkbench();
@@ -122,13 +183,28 @@ extends TextEditor
 			}
 		}.start();
 	}
+	
+	
+	public void updateOutline() {
+		if (outline != null)
+			outline.update();		
+	}
 
 	@Override
 	public void dispose()
 	{
-		if (this.outline != null) {
-			this.outline.update();
-		}
+		outline.dispose();
+		if (typeCheckScheduler!=null) {
+			typeCheckScheduler.cancel(); // avoid unnecessary work after the editor is asked to close down
+			typeCheckScheduler = null;
+        }
+		
+		 IDocument document = getSourceViewer().getDocument();
+	     if( document != null ) 
+	    	 document.removeDocumentListener(documentListener);
+	        
+	     removePropertyListener(editorInputPropertyListener);
+		
 		super.dispose();
 	}
 
@@ -136,63 +212,51 @@ extends TextEditor
 	public void doRevertToSaved()
 	{
 		super.doRevertToSaved();
-		if (this.outline != null) {
-			this.outline.update();
-		}
-		
+		updateOutline();
 		updateErrors();
+	}
+	
+	private void scheduleParsing() {
+		if( typeCheckScheduler != null ) {
+			typeCheckScheduler.cancel();            
+			typeCheckScheduler.schedule(TYPECHECK_SCHEDULE_DELAY);
+        }
 	}
 
 
 	@Override
-	public void doSave(IProgressMonitor monitor)
-	{
+	public void doSave(IProgressMonitor monitor) {
 		super.doSave(monitor);
 		if (this.outline != null) {
-			this.outline.setSelection(null);
-			this.outline.update();
+			this.outline.setSelection(null);			
 		}
-		
+		updateOutline();
 		updateErrors();
 	}
 
 
 	@Override
-	public void doSaveAs()
-	{
+	public void doSaveAs() {
 		super.doSaveAs();
-		if (this.outline != null) {
-			this.outline.update();
-		}
-		
+		updateOutline();
 		updateErrors();
 	}
 
 	@Override
 	public void doSetInput(IEditorInput input)
-			throws CoreException
-	{
+			throws CoreException {
 		super.doSetInput(input);
-		if (this.outline != null) {
-			this.outline.update();
-		}
-		
+		updateOutline();
 		updateErrors();
 	}
 
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Object getAdapter(Class required)
-	{
-		if (IContentOutlinePage.class.equals(required))
-		{
-			/*super.createAnnotationAccess();// change
-    	super.*/
-
-			if (this.outline == null) {
-				this.outline = new ShadowOutline(this);
-			}
+	public Object getAdapter(Class required) {
+		if (IContentOutlinePage.class.equals(required)) {			
+			if (this.outline == null)
+				this.outline = new ShadowOutline(this);			
 			return this.outline;
 		}
 
@@ -227,6 +291,9 @@ extends TextEditor
 	@Override
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
+		
+		typeCheckScheduler = new TypeCheckScheduler(this);
+		
 		ProjectionViewer viewer= (ProjectionViewer) getSourceViewer();
 		projectionSupport= new ProjectionSupport(viewer, getAnnotationAccess(), getSharedColors());
 		projectionSupport.addSummarizableAnnotationType("org.eclipse.ui.workbench.texteditor.error"); //$NON-NLS-1$
@@ -235,6 +302,17 @@ extends TextEditor
 		viewer.doOperation(ProjectionViewer.TOGGLE);
 		
 		annotationModel = viewer.getProjectionAnnotationModel();
+		
+		IDocument document = getSourceViewer().getDocument();
+		documentListener =  new DocumentListener(document);
+		
+        if( document!=null )
+            document.addDocumentListener(documentListener);
+        
+        addPropertyListener(editorInputPropertyListener);
+        
+        //initial typecheck
+        //typeCheckScheduler.schedule();		
 	}
 	
 	private Annotation[] oldAnnotations;	
