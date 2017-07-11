@@ -229,8 +229,10 @@ public class ShadowSourceViewer extends ProjectionViewer {
 			final int selStart = p.x;
 			final int selLen = p.y;
 			final int selEnd = selStart+selLen;
-			doc.replace(selStart, 0, "/*");
-			doc.replace(selEnd+2, 0, "*/");
+			if( selLen > 0 ) {
+				doc.replace(selStart, 0, "/*");
+				doc.replace(selEnd+2, 0, "*/");
+			}
 		} 
 		catch (BadLocationException e) {
 			e.printStackTrace();

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Shadow Eclipse Plug-in" id="org.shadow-language.product" application="org.eclipse.ui.ide.workbench" useFeatures="false" includeLaunchers="true">
+
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
+      </vmArgsMac>
+   </launcherArgs>
+
+   <windowImages/>
+
+
+   <launcher>
+      <solaris/>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+
+   <vm>
+   </vm>
+
+
+   <plugins>
+      <plugin id="org.shadow-language"/>
+   </plugins>
+
+   <configurations>
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
+   </configurations>
+
+   <preferencesInfo>
+      <targetfile overwrite="false"/>
+   </preferencesInfo>
+
+   <cssInfo>
+   </cssInfo>
+
+</product>
