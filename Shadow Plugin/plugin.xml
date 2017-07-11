@@ -265,6 +265,12 @@
             contextId="org.eclipse.ui.contexts.window"
             schemeId="shadow.plugin.scheme"
             sequence="M2+M3+J">
+      </key>
+      <key
+            commandId="org.eclipse.ui.window.showKeyAssist"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="shadow.plugin.scheme"
+            sequence="M1+M2+L">
       </key>      
    </extension>
    <extension
