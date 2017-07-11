@@ -18,13 +18,18 @@ import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.part.FileEditorInput;
+
+import shadow.plugin.ShadowPlugin;
 
 public class ShadowSourceViewer extends ProjectionViewer {
 	
-	private final Pattern ONE_LINER = Pattern.compile("\\s*(if|for|while|do|foreach|switch|case)\\s*\\(.*\\)\\s*"); 
+	private final Pattern ONE_LINER = Pattern.compile("\\s*(if|for|while|do|foreach|switch|case)\\s*\\(.*\\)\\s*");
+	private ShadowEditor editor;
 
-	public ShadowSourceViewer(Composite parent, IVerticalRuler ruler, IOverviewRuler overviewRuler, boolean showsAnnotationOverview, int styles) {
-		super(parent, ruler, overviewRuler, showsAnnotationOverview, styles);	
+	public ShadowSourceViewer(Composite parent, IVerticalRuler ruler, IOverviewRuler overviewRuler, boolean showsAnnotationOverview, int styles, ShadowEditor editor) {
+		super(parent, ruler, overviewRuler, showsAnnotationOverview, styles);
+		this.editor = editor;
 	}
 
 	public void correctIndentation() {
@@ -184,6 +189,28 @@ public class ShadowSourceViewer extends ProjectionViewer {
 		   i += Character.charCount(codepoint);
 		}
 		return braceChange;
+	}
+	
+	public void generateElementComment() {
+		IDocument doc = this.getDocument();
+		DocumentRewriteSession rewriteSession = null;
+		Point p = this.getSelectedRange();
+
+		if (doc instanceof IDocumentExtension4) {
+			rewriteSession = 
+					((IDocumentExtension4) doc)
+					.startRewriteSession(DocumentRewriteSessionType.SEQUENTIAL);
+		}
+
+		final int charOffset = p.x;				
+		ShadowPlugin.getDefault().getCompilerInterface().generateElementComment((FileEditorInput)editor.getEditorInput(), doc, charOffset);			
+	
+	
+		if (doc instanceof IDocumentExtension4) {
+			((IDocumentExtension4) doc)
+			.stopRewriteSession(rewriteSession);
+		}
+		restoreSelection();		
 	}
 
 

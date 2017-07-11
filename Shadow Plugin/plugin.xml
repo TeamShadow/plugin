@@ -218,32 +218,46 @@
             id="shadow.plugin.commands.removeBlockComment"
             name="Remove Block Comment">
       </command>
+      <command
+            defaultHandler="shadow.plugin.commands.GenerateElementCommentHandler"
+            description="Generates comment for the current element"
+            id="shadow.plugin.commands.generateElementComment"
+            name="Generate Element Comment">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.bindings">
+     <sequenceModifier
+        find="M2+M3" replace="M1+M3" 
+        platforms="cocoa,carbon"/>         
+         
       <key
             commandId="shadow.plugin.commands.correctIndentation"
             contextId="org.eclipse.ui.contexts.window"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            schemeId="shadow.plugin.scheme"
             sequence="M1+I">
       </key>
        <key
             commandId="shadow.plugin.commands.toggleComment"
             contextId="org.eclipse.ui.contexts.window"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            schemeId="shadow.plugin.scheme"
             sequence="M1+/">
       </key>
        <key
             commandId="shadow.plugin.commands.addBlockComment"
             contextId="org.eclipse.ui.contexts.window"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            schemeId="shadow.plugin.scheme"
             sequence="M1+M2+/">
       </key>
       <key
             commandId="shadow.plugin.commands.removeBlockComment"
             contextId="org.eclipse.ui.contexts.window"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            schemeId="shadow.plugin.scheme"
             sequence="M1+M2+\">
       </key>
+      <scheme
+            id="shadow.plugin.scheme"
+            name="shadow.plugin.scheme">
+      </scheme>      
    </extension>
 </plugin>

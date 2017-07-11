@@ -71,7 +71,21 @@ public class ShadowCompilerInterface {
 	 	catch (IOException e) {
 			return null;
 		}		
-	}	
+	}
+	
+	public void generateElementComment(FileEditorInput input, IDocument document, int charOffset) { 
+		Path inputPath = input.getPath().toFile().toPath();
+		ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
+	 	ParseChecker checker = new ParseChecker(reporter);
+	 	try{	 		
+	 		Context compilationUnit = checker.getCompilationUnit(document.get(), inputPath);
+	 		ElementCommentGenerator adder = new ElementCommentGenerator();	 		
+	 		adder.generateComment(charOffset, compilationUnit, document);	 		
+	 	}
+	 	catch(ShadowException | IOException e) {
+		}		
+	}
+	
 	
 	
 	public  synchronized void typeCheck(FileEditorInput newInput, IDocument document) {
@@ -114,8 +128,8 @@ public class ShadowCompilerInterface {
 			{}			
 			List<ShadowException> errorList = reporter.getErrorList();
 			List<ShadowException> warningList = reporter.getWarningList();		
-			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );
 			listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING, document);
+			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );			
 		} catch (ConfigurationException | IOException e) {
 			e.printStackTrace();
 		}

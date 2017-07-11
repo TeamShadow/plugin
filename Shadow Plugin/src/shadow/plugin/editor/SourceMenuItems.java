@@ -1,8 +1,6 @@
 package shadow.plugin.editor;
 
 
-import java.util.Arrays;
-
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
@@ -54,6 +52,9 @@ public class SourceMenuItems extends CompoundContributionItem {
                          isSelected),
                  new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.removeBlockComment", 
                          "Re&move Block Comment", 
+                         true),
+                 new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.generateElementComment", 
+                         "Generate &Element Comment", 
                          true),
                 new Separator(),
                 new DynamicMenuItem(ITextEditorActionDefinitionIds.SHIFT_LEFT, 

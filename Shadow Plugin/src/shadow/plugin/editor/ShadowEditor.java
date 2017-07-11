@@ -281,7 +281,7 @@ extends TextEditor
 		fAnnotationAccess= createAnnotationAccess();
 		fOverviewRuler= createOverviewRuler(getSharedColors());
 
-		ISourceViewer viewer = new ShadowSourceViewer(parent, ruler, getOverviewRuler(), isOverviewRulerVisible(), styles);
+		ISourceViewer viewer = new ShadowSourceViewer(parent, ruler, getOverviewRuler(), isOverviewRulerVisible(), styles, this);
 		// ensure decoration support has been created and configured.
 		getSourceViewerDecorationSupport(viewer);
 

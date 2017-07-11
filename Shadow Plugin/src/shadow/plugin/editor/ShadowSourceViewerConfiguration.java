@@ -25,6 +25,10 @@ public class ShadowSourceViewerConfiguration
 		this.editor = editor;
 	}
 	
+	public ShadowEditor getEditor() {
+		return editor;
+	}
+	
   public int getTabWidth(ISourceViewer sourceViewer)
   {
     return 4;
