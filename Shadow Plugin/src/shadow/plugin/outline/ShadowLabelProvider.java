@@ -14,7 +14,6 @@ import org.eclipse.swt.graphics.Image;
 import org.osgi.framework.Bundle;
 
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.Tree;
 
 public class ShadowLabelProvider
 extends LabelProvider

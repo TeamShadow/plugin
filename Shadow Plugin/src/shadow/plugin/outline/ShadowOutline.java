@@ -5,10 +5,12 @@ import java.net.URL;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.SubToolBarManager;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -18,6 +20,8 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.ToolItem;
+import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -25,7 +29,6 @@ import org.eclipse.ui.views.contentoutline.ContentOutlinePage;
 import org.osgi.framework.Bundle;
 
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.Tree;
 
 public class ShadowOutline
 extends ContentOutlinePage
@@ -50,21 +53,14 @@ extends ContentOutlinePage
                
         Control control = treeViewer.getControl();
         control.setMenu(contextMenu.createContextMenu(control));
-        */
+        */       
+        
         TreeViewer treeViewer = getTreeViewer();
-        CollapseAllAction collapseAllAction = 
-                new CollapseAllAction(treeViewer);
-//        SortingAction sortAction = 
-//                new SortingAction();
-//        HideFieldsAction hideFieldsAction = 
-//                new HideFieldsAction();
-//        
-//        HideNonPublicAction hideNonPublicAction = 
-//                new HideNonPublicAction();
-//        
-        toolBarManager.add(collapseAllAction);
-        //toolBarManager.add(sortAction);
-        //toolBarManager.add(hideFieldsAction);
+        
+        toolBarManager.add(new CollapseAllAction(treeViewer));
+        toolBarManager.add(new SortingAction(treeViewer));
+        toolBarManager.add(new HideFieldsAction(treeViewer));
+        toolBarManager.add(new HideNonPublicAction(treeViewer));
     }
 
 	public void createControl(Composite parent)
@@ -74,6 +70,7 @@ extends ContentOutlinePage
 		viewer.setContentProvider(new ShadowContentProvider(editor));
 		viewer.setLabelProvider(new ShadowLabelProvider());		
 		viewer.addSelectionChangedListener(this);
+		viewer.setAutoExpandLevel(TreeViewer.ALL_LEVELS);
 		update();
 	}
 	
@@ -89,7 +86,7 @@ extends ContentOutlinePage
 		} catch (IOException e) {
 			return null;
 		}		
-	}
+	}	
 
 	public void update()
 	{

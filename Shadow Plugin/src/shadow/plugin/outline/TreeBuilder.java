@@ -1,11 +1,10 @@
-package shadow.plugin.compiler;
+package shadow.plugin.outline;
 
 import shadow.parse.Context;
 import shadow.parse.ShadowBaseVisitor;
 import shadow.parse.ShadowParser;
 import shadow.parse.ShadowParser.ResultTypesContext;
 import shadow.parse.ShadowParser.VariableDeclaratorContext;
-import shadow.plugin.outline.ShadowLabel;
 
 public class TreeBuilder extends ShadowBaseVisitor<Void> {	
 	
@@ -18,6 +17,8 @@ public class TreeBuilder extends ShadowBaseVisitor<Void> {
 	}	
 
 	@Override public Void visitCompilationUnit(ShadowParser.CompilationUnitContext ctx)  { 
+		currentModifiers = ctx.modifiers();
+		
 		currentTree = new Tree(ctx, null, null, ShadowLabel.COMPILATION_UNIT);
 		return visitChildren(ctx);
 	}	
@@ -31,7 +32,13 @@ public class TreeBuilder extends ShadowBaseVisitor<Void> {
 		switch( ctx.children.get(0).getText() ) {		
 		default:
 		case "class":
-			label = ShadowLabel.CLASS;
+			String modifiers = currentModifiers.getText();
+			if( modifiers.contains("protected") )
+				label = ShadowLabel.PROTECTED_CLASS;
+			else if( modifiers.contains("private") )
+				label = ShadowLabel.PRIVATE_CLASS;
+			else			
+				label = ShadowLabel.PUBLIC_CLASS;
 			break;
 		case "singleton":
 			label = ShadowLabel.SINGLETON;

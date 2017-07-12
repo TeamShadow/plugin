@@ -27,6 +27,7 @@ import shadow.parse.ParseChecker;
 import shadow.parse.ParseException;
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.outline.ShadowOutlineError;
+import shadow.plugin.outline.TreeBuilder;
 import shadow.plugin.preferences.PreferencePage;
 import shadow.tac.TACBuilder;
 import shadow.typecheck.ErrorReporter;

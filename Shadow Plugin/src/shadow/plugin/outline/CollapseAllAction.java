@@ -18,7 +18,7 @@ public class CollapseAllAction  extends Action {
 	public void run() {
 		try {
 			viewer.getControl().setRedraw(false);
-			viewer.collapseAll();
+			viewer.collapseAll();			
 		} finally {
 			viewer.getControl().setRedraw(true);
 		}

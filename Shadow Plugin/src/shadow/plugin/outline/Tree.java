@@ -1,4 +1,4 @@
-package shadow.plugin.compiler;
+package shadow.plugin.outline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,15 +8,15 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.jface.viewers.StyledString;
 
 import shadow.parse.Context;
-import shadow.plugin.outline.ShadowLabel;
 
-public class Tree {  
+public class Tree implements Comparable<Tree> {  
 	private ParseTree node;
 	private List<Tree> children;
 	private Tree parent;
 	private ShadowLabel label;
 	private String name;
 	private String extra;
+
 
 	public Tree(ParseTree node, Tree parent, String name, ShadowLabel label) {
 		this(node, parent, name, "", label);
@@ -35,7 +35,7 @@ public class Tree {
 			parent.children.add(this);
 	}
 
-	public Object[] getChildren() {
+	public Object[] getChildren() {	
 		return children.toArray();
 	}
 
@@ -45,6 +45,17 @@ public class Tree {
 
 	public Tree getParent() {
 		return parent;
+	}
+	
+	public boolean isField() {
+		return label == ShadowLabel.FIELD;
+	}
+	
+	public boolean isNonPublic() {
+		return 	label == ShadowLabel.PRIVATE_CLASS || label == ShadowLabel.PROTECTED_CLASS ||				
+				label == ShadowLabel.FIELD || label == ShadowLabel.PRIVATE_CONSTANT ||
+				label == ShadowLabel.PRIVATE_METHOD || label == ShadowLabel.PROTECTED_CONSTANT ||
+				label == ShadowLabel.PROTECTED_METHOD;
 	}
 
 	public String toString() {
@@ -117,6 +128,14 @@ public class Tree {
 
 	public int getLength() {
 		return name.length();
+	}
+
+	@Override
+	public int compareTo(Tree other) {
+		if( label.level != other.label.level )
+			return label.level - other.label.level;
+		
+		return toString().compareTo(other.toString());
 	}
 }	
 
