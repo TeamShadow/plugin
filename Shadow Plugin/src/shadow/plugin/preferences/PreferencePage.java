@@ -45,10 +45,4 @@ public class PreferencePage extends FieldEditorPreferencePage  implements IWorkb
 		return ShadowPlugin.getDefault().getPreferenceStore();
 	}
 	
-	@Override
-	public boolean performOk() {
-		boolean value = super.performOk();
-		ShadowPlugin.getDefault().resetCompilerInterface();
-		return value;
-	}
 }

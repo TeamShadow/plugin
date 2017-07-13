@@ -2,7 +2,6 @@ package shadow.plugin.compiler;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +23,7 @@ import shadow.Main;
 import shadow.ShadowException;
 import shadow.parse.Context;
 import shadow.parse.ParseChecker;
-import shadow.parse.ParseException;
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.outline.ShadowOutlineError;
 import shadow.plugin.outline.TreeBuilder;
 import shadow.plugin.preferences.PreferencePage;
 import shadow.tac.TACBuilder;
@@ -57,7 +54,7 @@ public class ShadowCompilerInterface {
 		return error.trim();		
 	}
 	
-	public Object buildOutline(FileEditorInput newInput, IDocument document) { 
+	public static Object buildOutline(FileEditorInput newInput, IDocument document) { 
 		Path inputPath = newInput.getPath().toFile().toPath();
 		ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
 	 	ParseChecker checker = new ParseChecker(reporter);
@@ -66,15 +63,12 @@ public class ShadowCompilerInterface {
 	 		TreeBuilder maker = new TreeBuilder();
 	 		return maker.makeTree(compilationUnit);
 	 	}
-	 	catch(ShadowException error) {
-	 		return new ShadowOutlineError(error.lineStart(), error.columnStart(), cleanError(error.getLocalizedMessage()));
-	 	}
 	 	catch (IOException e) {
 			return null;
 		}		
 	}
 	
-	public void generateElementComment(FileEditorInput input, IDocument document, int charOffset) { 
+	public static void generateElementComment(FileEditorInput input, IDocument document, int charOffset) { 
 		Path inputPath = input.getPath().toFile().toPath();
 		ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
 	 	ParseChecker checker = new ParseChecker(reporter);
@@ -83,61 +77,55 @@ public class ShadowCompilerInterface {
 	 		ElementCommentGenerator adder = new ElementCommentGenerator();	 		
 	 		adder.generateComment(charOffset, compilationUnit, document);	 		
 	 	}
-	 	catch(ShadowException | IOException e) {
+	 	catch(IOException e) {
 		}		
 	}
 	
-	
-	
-	public  synchronized void typeCheck(FileEditorInput newInput, IDocument document) {
+	public static synchronized void typeCheck(FileEditorInput newInput, IDocument document) {
 		
 		Path inputPath = newInput.getPath().toFile().toPath();
 		IFile inputIFile = newInput.getFile();
-
-				
 		
-		try {		
-			IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
-					.getPreferenceStore();
-			String configurationPath = preferenceStore.getString(PreferencePage.CONFIGURATION_PATH);
-			if( configurationPath == null || configurationPath.trim().isEmpty() )
-				configurationPath = System.getenv("SHADOW_HOME");
-			Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
-			ErrorReporter reporter = new ErrorReporter(Loggers.TYPE_CHECKER);
-			try {				
-				Context node = TypeChecker.typeCheck(document.get(), inputPath, reporter);
-				if( reporter.getErrorList().size() == 0 )
-					Main.optimizeTAC(new TACBuilder().build(node), reporter, true);
-			}
-			catch(ParseException e) {
-				// delete all of the existing IMarkers.
-				try {
-					inputIFile.deleteMarkers(null, true, IResource.DEPTH_INFINITE);
-				}
-				catch (CoreException exception)
-				{}
-				listErrors( Arrays.asList(e), inputIFile, IMarker.SEVERITY_ERROR, document );
-				return;
-			}
-			catch(ShadowException e) {}
+		try {
 			
 			// delete all of the existing IMarkers.
 			try {
 				inputIFile.deleteMarkers(null, true, IResource.DEPTH_INFINITE);
 			}
-			catch (CoreException e)
+			catch (CoreException exception)
 			{}			
-			List<ShadowException> errorList = reporter.getErrorList();
+			
+			ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
+		 	ParseChecker checker = new ParseChecker(reporter);		 	
+		 	checker.getCompilationUnit(document.get(), inputPath);
+		 	List<ShadowException> errorList = reporter.getErrorList();
 			List<ShadowException> warningList = reporter.getWarningList();		
 			listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING, document);
-			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );			
-		} catch (ConfigurationException | IOException e) {
-			e.printStackTrace();
-		}
-		
+			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );	
+		 	
+		 	if( errorList.size() == 0 ) {
+				IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
+						.getPreferenceStore();
+				String configurationPath = preferenceStore.getString(PreferencePage.CONFIGURATION_PATH);
+				if( configurationPath == null || configurationPath.trim().isEmpty() )
+					configurationPath = System.getenv("SHADOW_HOME");
+				Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
+				
+				reporter = new ErrorReporter(Loggers.TYPE_CHECKER);								
+				Context node = TypeChecker.typeCheck(document.get(), inputPath, reporter);
+				if( reporter.getErrorList().size() == 0 )
+					Main.optimizeTAC(new TACBuilder().build(node), reporter, true);
+							
+				errorList = reporter.getErrorList();
+				warningList = reporter.getWarningList();		
+				listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING, document);
+				listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );
+		 	}
+		} 
+		catch (ShadowException | ConfigurationException | IOException e) { }		
 	}
 		
-	private void listErrors( List<ShadowException> errors, IFile file, int severity, IDocument document )  {
+	private static void listErrors( List<ShadowException> errors, IFile file, int severity, IDocument document )  {
 		for( ShadowException error : errors ) {			
 			String message = cleanError(error.toString());
 			if( !message.isEmpty() ) {

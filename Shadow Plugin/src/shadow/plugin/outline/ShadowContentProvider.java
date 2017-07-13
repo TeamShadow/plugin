@@ -5,50 +5,23 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-import shadow.plugin.ShadowPlugin;
+import shadow.plugin.compiler.ShadowCompilerInterface;
 
 public class ShadowContentProvider
 implements ITreeContentProvider
 {
 	private Object root = null;
-	private ITextEditor editor;
-	private boolean hideFields = false;
-	private boolean hideNonPublic = false; 
-	private boolean sorted = false;
+	private ITextEditor editor;	
 
 	public ShadowContentProvider(ITextEditor editor) {
 		this.editor = editor;
 	}
 	
-	public boolean isHideFields() {
-		return hideFields;
-	}
-	
-	public void setHideFields(boolean value) {
-		hideFields = value; 
-	}
-	
-	public boolean isHideNonPublic() {
-		return hideNonPublic;
-	}
-	
-	public void setHideNonPublic(boolean value) {
-		hideNonPublic = value; 
-	}
-	
-	public boolean isSorted() {
-		return sorted;
-	}
-	
-	public void setSorted(boolean value) {
-		sorted = value; 
-	}
-
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput)
 	{  
 		if( newInput != null )	  
-			root = ShadowPlugin.getDefault().getCompilerInterface().buildOutline((FileEditorInput) newInput, editor.getDocumentProvider().getDocument(newInput));
+			root = ShadowCompilerInterface.buildOutline((FileEditorInput) newInput, editor.getDocumentProvider().getDocument(newInput));
 		else
 			root = null;
 	}

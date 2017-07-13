@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.plugin.ShadowPlugin;
+import shadow.plugin.compiler.ShadowCompilerInterface;
 
 public class ShadowSourceViewer extends ProjectionViewer {
 	
@@ -203,7 +204,7 @@ public class ShadowSourceViewer extends ProjectionViewer {
 		}
 
 		final int charOffset = p.x;				
-		ShadowPlugin.getDefault().getCompilerInterface().generateElementComment((FileEditorInput)editor.getEditorInput(), doc, charOffset);			
+		ShadowCompilerInterface.generateElementComment((FileEditorInput)editor.getEditorInput(), doc, charOffset);			
 	
 	
 		if (doc instanceof IDocumentExtension4) {

@@ -101,7 +101,7 @@ public class TypeCheckScheduler extends Job {
                     return Status.OK_STATUS;
                 }              
                 
-                ShadowPlugin.getDefault().getCompilerInterface().typeCheck((FileEditorInput)editor.getEditorInput(), document);
+                ShadowCompilerInterface.typeCheck((FileEditorInput)editor.getEditorInput(), document);
                 
                 Display.getDefault().asyncExec(new Runnable() {
                     public void run() {

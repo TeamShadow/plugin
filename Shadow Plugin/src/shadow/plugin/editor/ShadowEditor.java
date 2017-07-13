@@ -46,6 +46,7 @@ import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 import shadow.plugin.ShadowPlugin;
+import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.plugin.compiler.TypeCheckScheduler;
 import shadow.plugin.outline.ShadowOutline;
 
@@ -179,7 +180,7 @@ extends TextEditor
 		new Thread() {
 			@Override
 			public void run() {
-				ShadowPlugin.getDefault().getCompilerInterface().typeCheck((FileEditorInput)getEditorInput(), getDocumentProvider().getDocument(getEditorInput()));
+				ShadowCompilerInterface.typeCheck((FileEditorInput)getEditorInput(), getDocumentProvider().getDocument(getEditorInput()));
 			}
 		}.start();
 	}
