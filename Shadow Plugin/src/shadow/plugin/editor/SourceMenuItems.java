@@ -22,7 +22,10 @@ public class SourceMenuItems extends CompoundContributionItem {
     
     @Override
     public IContributionItem[] getContributionItems() {
-        IContributionItem[] items = getItems(ShadowEditor.getActiveEditor());        
+        IContributionItem[] items = getItems(ShadowEditor.getActiveEditor());    
+        return items;
+        /*
+        
         if (DynamicMenuItem.isContextMenu(getParent())) {
             MenuManager submenu = new MenuManager("Source");
             submenu.setActionDefinitionId(ShadowEditor.SOURCE_MENU_ID);
@@ -33,7 +36,8 @@ public class SourceMenuItems extends CompoundContributionItem {
         }        
         else {
             return items;            
-        }        
+        } 
+        */       
     }
     
     public static final String REMOVE_UNUSED_IMPORTS = "remove_unused_imports";    
@@ -41,35 +45,42 @@ public class SourceMenuItems extends CompoundContributionItem {
     private IContributionItem[] getItems(IEditorPart editor) {
     	
     	ShadowEditor shadowEditor = (ShadowEditor) editor;
-    	Point selection = shadowEditor.getShadowSourceViewer().getSelectedRange();
-    	boolean isSelected = selection.y > 0;    	
+    	boolean addBlockSelected = false;
+    	boolean enabled = false;
+    	
+    	ShadowSourceViewer viewer = shadowEditor.getShadowSourceViewer();
+    	if( viewer != null ) {
+    		Point selection = viewer.getSelectedRange();
+    		addBlockSelected = selection.y > 0;
+    		enabled = true;
+    	}
         return new IContributionItem[] {
         		 new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.toggleComment", 
                          "Toggle &Comment", 
-                         true),
+                         enabled),
                  new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.addBlockComment", 
                          "&Add Block Comment", 
-                         isSelected),
+                         addBlockSelected),
                  new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.removeBlockComment", 
                          "Re&move Block Comment", 
-                         true),
+                         enabled),
                  new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.generateElementComment", 
                          "Generate &Element Comment", 
-                         true),
+                         enabled),
                 new Separator(),
                 new DynamicMenuItem(ITextEditorActionDefinitionIds.SHIFT_LEFT, 
                         "Shift &Left", 
-                        true),
+                        enabled),
                 new DynamicMenuItem(ITextEditorActionDefinitionIds.SHIFT_RIGHT, 
                         "Shift &Right", 
-                        true),
+                        enabled),
                 new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.correctIndentation", 
                         "Correct &Indentation", 
-                        true),
+                        enabled),
                 new Separator(),
                 new DynamicMenuItem(ShadowPlugin.PLUGIN_ID + ".commands.removeUnusedImports", 
                         "Remove &Unused Imports", 
-                        true)
+                        enabled)
                
         };
     }

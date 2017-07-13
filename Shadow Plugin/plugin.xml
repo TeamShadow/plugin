@@ -167,6 +167,14 @@
          <menu
                id="shadow.plugin.editor.menu.source"
                label="&amp;Source">
+                <visibleWhen>             
+				  <with
+				     variable="activePart">
+				     <instanceof
+				          value="org.eclipse.ui.IEditorPart">
+				     </instanceof>
+				  </with>
+			  </visibleWhen>       
             <dynamic id="source"
                   class="shadow.plugin.editor.SourceMenuItems"/>
          </menu>
@@ -174,16 +182,23 @@
       <menuContribution
             allPopups="false"
             locationURI="popup:org.eclipse.ui.popup.any?after=group.edit">
-         <dynamic
-               class="shadow.plugin.editor.SourceMenuItems"
-               id="source">               
-			  <with
-			     variable="activePart">
-			     <instanceof
-			          value="org.eclipse.ui.IEditorPart">
-			     </instanceof>
-			  </with>  
-         </dynamic>
+         <menu 
+	         id="shadow.plugin.editor.menu.popup.source"
+	         label="&amp;Source">
+	         <visibleWhen>             
+				  <with
+				     variable="activePart">
+				     <instanceof
+				          value="org.eclipse.ui.IEditorPart">
+				     </instanceof>
+				  </with>
+			  </visibleWhen>          
+	         <dynamic
+	               class="shadow.plugin.editor.SourceMenuItems"
+	               id="source">  
+	                
+	         </dynamic>
+	      </menu>
       </menuContribution>
    </extension>
    <extension
@@ -288,5 +303,19 @@
                value="plugin_customization.ini">
          </property>
       </product>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="shadow.plugin.wizards"
+            name="Shadow">
+      </category>
+      <wizard
+            category="shadow.plugin.wizards"
+            class="shadow.plugin.wizards.NewShadowProjectWizard"
+            icon="icons/shadow.png"
+            id="shadow.plugin.new.custom"
+            name="Shadow Project">
+      </wizard>
    </extension>
 </plugin>

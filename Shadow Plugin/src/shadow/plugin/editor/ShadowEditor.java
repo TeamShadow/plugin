@@ -379,6 +379,6 @@ extends TextEditor
     protected void editorContextMenuAboutToShow(IMenuManager menu) {
         super.editorContextMenuAboutToShow(menu);        
         menu.remove(ITextEditorActionConstants.SHIFT_LEFT);
-        menu.remove(ITextEditorActionConstants.SHIFT_RIGHT);
+        menu.remove(ITextEditorActionConstants.SHIFT_RIGHT); 
     }	
 }
