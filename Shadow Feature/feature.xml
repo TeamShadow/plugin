@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.shadow-language.feature"
+      id="shadow.plugin.feature"
       label="Shadow Eclipse Plug-in"
       version="0.7.1">
 
@@ -195,7 +195,7 @@
    </url>
 
    <plugin
-         id="org.shadow-language"
+         id="shadow.plugin"
          download-size="0"
          install-size="0"
          version="0.0.0"

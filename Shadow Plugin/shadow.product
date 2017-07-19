@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Shadow Eclipse Plug-in" id="org.shadow-language.product" application="org.eclipse.ui.ide.workbench" useFeatures="false" includeLaunchers="true">
-
+<product name="Shadow Eclipse Plug-in" id="shadow.plugin.product" application="org.eclipse.ui.ide.workbench" useFeatures="false" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
@@ -14,7 +13,6 @@
 
    <windowImages/>
 
-
    <launcher>
       <solaris/>
       <win useIco="false">
@@ -22,13 +20,11 @@
       </win>
    </launcher>
 
-
    <vm>
    </vm>
 
-
    <plugins>
-      <plugin id="org.shadow-language"/>
+      <plugin id="shadow.plugin"/>
    </plugins>
 
    <configurations>

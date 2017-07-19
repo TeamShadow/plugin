@@ -114,7 +114,7 @@
       			  forcePluginActivation="true">
 	        </test>
 	     </adapt>
-	  </definition>
+	  </definition>  
   </extension>
    
    <extension
@@ -122,7 +122,7 @@
 	    <shortcut
 	        class="shadow.plugin.launcher.ShadowLaunchShortcut"
 	        icon="icons/shadow.png"
-	        id="org.shadow-language.shadowShortCut"
+	        id="shadow.plugin.shadowShortCut"
 	        label="Shadow Application"
 	        modes="run"
 	        description="Run Shadow program, compiling first if main source file has been updated more recently than executable.">
@@ -142,7 +142,7 @@
 	    <shortcut
 	        class="shadow.plugin.launcher.ShadowCompileShortcut"
 	        icon="icons/shadow.png"
-	        id="org.shadow-language.shadowShortCut"
+	        id="shadow.plugin.shadowShortCut"
 	        label="Shadow Compile Only"
 	        modes="run"
 	        description="Compile Shadow program but do not run, forcing compilation even if main source file has been updated more recently than executable.">
@@ -220,6 +220,23 @@
 	         </dynamic>
 	      </menu>
       </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.eclipse.ui.projectConfigure">
+         <command
+               commandId="shadow.plugin.nature.command"
+               style="push">
+	         <visibleWhen
+	                  checkEnabled="false">
+	               <not>
+	               <adapt type="org.eclipse.core.resources.IProject">
+                 <test property="org.eclipse.core.resources.projectNature" 
+                          value="shadow.plugin.shadownature" />
+             		</adapt>	                  
+	               </not>
+	            </visibleWhen>         
+         </command>             
+      </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.commands">
@@ -251,13 +268,19 @@
       		defaultHandler="shadow.plugin.commands.RemoveBlockCommentHandler"
             description="Uncomments the current selection"
             id="shadow.plugin.commands.removeBlockComment"
-            name="Remove Block Comment">
+            name="Convert to Shadow Project">
       </command>
       <command
             defaultHandler="shadow.plugin.commands.GenerateElementCommentHandler"
             description="Generates comment for the current element"
             id="shadow.plugin.commands.generateElementComment"
             name="Generate Element Comment">
+      </command>
+      <command
+      		defaultHandler="shadow.plugin.wizards.ShadowProjectNatureHandler"
+            description="Converts project to Shadow project"
+            id="shadow.plugin.nature.command"
+            name="Convert to Shadow Project">
       </command>
    </extension>
    <extension
@@ -355,7 +378,7 @@
       </wizard>
    </extension>
    <extension
-         id="shadow.plugin.shadownature"
+         id="shadownature"
          name="Shadow nature"
          point="org.eclipse.core.resources.natures">
       <runtime>

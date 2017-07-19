@@ -6,6 +6,10 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.IDE;
 
 public class NewShadowFileWizard extends Wizard implements INewWizard {
 
@@ -64,6 +68,14 @@ public class NewShadowFileWizard extends Wizard implements INewWizard {
 		if( file == null )
 			return false;
 		
+	
+		if( file.exists() ) {		    
+		    IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		    try {
+				IDE.openEditor(page, file);
+			} catch (PartInitException e) {				
+			}		 
+		}
 		
 		/*try { 
 			
