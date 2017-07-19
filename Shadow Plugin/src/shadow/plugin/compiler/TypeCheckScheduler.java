@@ -13,7 +13,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.part.FileEditorInput;
 
-import shadow.plugin.ShadowPlugin;
 import shadow.plugin.editor.ShadowEditor;
 import shadow.plugin.editor.ShadowSourceViewer;
 
@@ -101,7 +100,7 @@ public class TypeCheckScheduler extends Job {
                     return Status.OK_STATUS;
                 }              
                 
-                ShadowCompilerInterface.typeCheck((FileEditorInput)editor.getEditorInput(), document);
+                ShadowCompilerInterface.reportTypeCheckErrors((FileEditorInput)editor.getEditorInput(), document);
                 
                 Display.getDefault().asyncExec(new Runnable() {
                     public void run() {

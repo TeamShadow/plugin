@@ -180,7 +180,7 @@ extends TextEditor
 		new Thread() {
 			@Override
 			public void run() {
-				ShadowCompilerInterface.typeCheck((FileEditorInput)getEditorInput(), getDocumentProvider().getDocument(getEditorInput()));
+				ShadowCompilerInterface.reportTypeCheckErrors((FileEditorInput)getEditorInput(), getDocumentProvider().getDocument(getEditorInput()));
 			}
 		}.start();
 	}

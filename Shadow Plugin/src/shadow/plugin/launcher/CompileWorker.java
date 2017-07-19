@@ -27,7 +27,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	private IPath executable;
 	private String pathToCompiler;
 	private List<String> arguments;
-	private IProject project;
+	private IProject project;	 
 	
 	public CompileWorker(IPath path, String pathToCompiler, String arguments, boolean compileOnly, IProject project) {
 		this.path = path;
@@ -103,9 +103,9 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		
 		try {
 			if( value == 0 )			
-				stream.write("Compilation succeeded.\n");
+				stream.write("Compilation of " + pathName + " succeeded.\n");
 			else
-				stream.write("Compilation failed.\n");
+				stream.write("Compilation of " + pathName + " failed.\n");
 			stream.flush();
 		}
 		catch (IOException e) 

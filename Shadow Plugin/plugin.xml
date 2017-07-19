@@ -72,17 +72,50 @@
 	            icon="icons/shadow.png">
 	    </launchConfigurationTypeImage>
 	</extension>
-	     
-     <extension
+   
+    <extension
          point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
             properties="canLaunchAsShadow"
             namespace="shadow.plugin.launcher"
-            type="org.eclipse.ui.part.FileEditorInput"
+            type="org.eclipse.core.runtime.IAdaptable"
             class="shadow.plugin.launcher.ShadowLaunchPropertyTester"
             id="shadow.plugin.launcher.ShadowLaunchPropertyTester">
       </propertyTester>
+      <propertyTester
+            properties="canCompileAsShadow"
+            namespace="shadow.plugin.launcher"
+            type="org.eclipse.core.runtime.IAdaptable"
+            class="shadow.plugin.launcher.ShadowCompilePropertyTester"
+            id="shadow.plugin.launcher.ShadowCompilePropertyTester">
+      </propertyTester>
    </extension>
+   
+   <extension
+     point="org.eclipse.core.expressions.definitions">
+	  <definition
+	        id="shadow.plugin.launcher.testLaunch">
+	     <adapt
+	           type="org.eclipse.core.runtime.IAdaptable">
+	        <test
+	              property="shadow.plugin.launcher.canLaunchAsShadow"
+	              value="true" 
+      			  forcePluginActivation="true">
+	        </test>
+	     </adapt>
+	  </definition>
+	  <definition
+	        id="shadow.plugin.launcher.testCompile">
+	     <adapt
+	           type="org.eclipse.core.runtime.IAdaptable">
+	        <test
+	              property="shadow.plugin.launcher.canCompileAsShadow"
+	              value="true" 
+      			  forcePluginActivation="true">
+	        </test>
+	     </adapt>
+	  </definition>
+  </extension>
    
    <extension
 	    point="org.eclipse.debug.ui.launchShortcuts">
@@ -97,17 +130,11 @@
 	            <enablement>
 	                <with variable="selection">
 	                    <count value="1"/>
-	                    <iterate>
-	                    	<or>
-		                    	<and>
-				                     <instanceof value="org.eclipse.core.resources.IFile"/>
-				                     <test
-				                           value="*.shadow"
-				                           property="org.eclipse.debug.ui.matchesPattern"/>
-			                    </and>		                    
-			                    <test property="shadow.plugin.launcher.canLaunchAsShadow"/>
-		                    </or>
-                  		</iterate>
+	                    <iterate>	                  
+		                    <reference
+		                          definitionId="shadow.plugin.launcher.testLaunch">
+		                    </reference>
+                 		</iterate>
 	                </with>
 	            </enablement>
 	        </contextualLaunch>
@@ -121,19 +148,12 @@
 	        description="Compile Shadow program but do not run, forcing compilation even if main source file has been updated more recently than executable.">
 	        <contextualLaunch>
 	            <enablement>
-	                <with variable="selection">
-	                    <count value="1"/>
-	                    <iterate>
-		                     <or>
-		                    	<and>
-				                     <instanceof value="org.eclipse.core.resources.IFile"/>
-				                     <test
-				                           value="*.shadow"
-				                           property="org.eclipse.debug.ui.matchesPattern"/>
-			                    </and>		                    
-			                    <test property="shadow.plugin.launcher.canLaunchAsShadow"/>
-		                    </or>
-                  		</iterate>
+	                <with variable="selection">	                    
+	                     <iterate>	                  
+		                    <reference
+		                          definitionId="shadow.plugin.launcher.testCompile">
+		                    </reference>
+                 		</iterate>
 	                </with>
 	            </enablement>
 	        </contextualLaunch>
@@ -311,11 +331,45 @@
             name="Shadow">
       </category>
       <wizard
+            canFinishEarly="false"
             category="shadow.plugin.wizards"
             class="shadow.plugin.wizards.NewShadowProjectWizard"
             icon="icons/shadow.png"
-            id="shadow.plugin.new.custom"
-            name="Shadow Project">
+            id="shadow.plugin.newProjectWizard"
+            name="Shadow Project"
+            project="true">
+         <description>
+            Create a Shadow project
+         </description>
       </wizard>
+      <wizard
+            canFinishEarly="false"
+            category="shadow.plugin.wizards"
+            class="shadow.plugin.wizards.NewShadowFileWizard"
+            icon="icons/shadow_file.gif"
+            id="shadow.plugin.newFileWizard"
+            name="Shadow File">
+         <description>
+            Create a Shadow file
+         </description>
+      </wizard>
+   </extension>
+   <extension
+         id="shadow.plugin.shadownature"
+         name="Shadow nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="shadow.plugin.wizards.ShadowProjectNature">
+         </run>
+      </runtime>
+   </extension>
+   <extension
+         point="org.eclipse.ui.ide.projectNatureImages">
+      <image
+            icon="icons/shadow_project.gif"
+            id="shadow.plugin.shadownature.image"
+            natureId="shadow.plugin.shadownature">
+      </image>
    </extension>
 </plugin>

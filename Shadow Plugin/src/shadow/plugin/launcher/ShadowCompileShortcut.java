@@ -1,7 +1,10 @@
 package shadow.plugin.launcher;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.debug.ui.ILaunchShortcut;
 import org.eclipse.jface.viewers.ISelection;
@@ -13,30 +16,41 @@ import org.eclipse.ui.part.FileEditorInput;
 public class ShadowCompileShortcut implements ILaunchShortcut {
 
 	@Override
-	public void launch(ISelection editor, String mode)  {
+	public void launch(ISelection selection, String mode)  {
 		
-		IPath path = null;
-		IProject project = null;
-		
-		if( editor instanceof TreeSelection ) {
-			TreeSelection selection = (TreeSelection) editor;			
-			Object element = selection.getFirstElement();
-			
-			if( element instanceof IFile ) {
-				IFile file = (IFile) element;
-				path = file.getLocation();
-				project = file.getProject();				
-			}
+		if( selection instanceof TreeSelection ) {
+			TreeSelection tree = (TreeSelection) selection;			
+			Object[] objects = tree.toArray();
+			compile(objects);
 		}
-		
-		if( path == null ) {			
-			path = ShadowLaunchConfigurationDelegate.getPath();
-			project = ShadowLaunchConfigurationDelegate.getProject();
-		}
-		
-		runCompiler(path, project);		
+		else {	
+			IPath path = ShadowLaunchConfigurationDelegate.getPath();
+			IProject project = ShadowLaunchConfigurationDelegate.getProject();
+			runCompiler(path, project);
+		}		
 	}	
 	
+	
+	private void compile(Object[] objects) {
+		for( Object object : objects ) {				
+			if( object instanceof IFile ) {
+				IFile file = (IFile) object;
+				if( file.getFullPath().getFileExtension().toLowerCase().equals("shadow") ) {						
+					IPath path = file.getLocation();
+					IProject project = file.getProject();
+					runCompiler(path, project);	
+				}
+			}
+			else if( object instanceof IContainer ) {
+				IContainer container = (IContainer) object;
+				IResource[] resources;
+				try {
+					resources = container.members();
+					compile(resources);
+				} catch (CoreException e) {}				
+			}
+		}
+	}	
 	
 	@Override
 	public void launch(IEditorPart editorPart, String mode) {				

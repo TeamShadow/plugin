@@ -23,12 +23,14 @@ import shadow.Main;
 import shadow.ShadowException;
 import shadow.parse.Context;
 import shadow.parse.ParseChecker;
+import shadow.parse.ShadowParser.CompilationUnitContext;
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.outline.TreeBuilder;
 import shadow.plugin.preferences.PreferencePage;
 import shadow.tac.TACBuilder;
 import shadow.typecheck.ErrorReporter;
 import shadow.typecheck.TypeChecker;
+import shadow.typecheck.type.Type;
 
 
 public class ShadowCompilerInterface {
@@ -81,10 +83,26 @@ public class ShadowCompilerInterface {
 		}		
 	}
 	
-	public static synchronized void typeCheck(FileEditorInput newInput, IDocument document) {
+	public static CompilationUnitContext getCompilationUnit(FileEditorInput input, IDocument document) {
+		Path inputPath = input.getPath().toFile().toPath();
+		ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
+	 	ParseChecker checker = new ParseChecker(reporter);
+	 	try{	 		
+	 		return checker.getCompilationUnit(document.get(), inputPath);	 			 		
+	 	}
+	 	catch(IOException e) {
+		}		
+	 	
+	 	return null;
+	}
+	
+	public static synchronized void reportTypeCheckErrors(FileEditorInput newInput, IDocument document) {
 		
 		Path inputPath = newInput.getPath().toFile().toPath();
 		IFile inputIFile = newInput.getFile();
+		ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
+		List<ShadowException> errorList;
+		List<ShadowException> warningList;
 		
 		try {
 			
@@ -95,11 +113,11 @@ public class ShadowCompilerInterface {
 			catch (CoreException exception)
 			{}			
 			
-			ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
+			
 		 	ParseChecker checker = new ParseChecker(reporter);		 	
 		 	checker.getCompilationUnit(document.get(), inputPath);
-		 	List<ShadowException> errorList = reporter.getErrorList();
-			List<ShadowException> warningList = reporter.getWarningList();		
+		 	errorList = reporter.getErrorList();
+			warningList = reporter.getWarningList();		
 			listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING, document);
 			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );	
 		 	
@@ -122,7 +140,47 @@ public class ShadowCompilerInterface {
 				listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );
 		 	}
 		} 
-		catch (ShadowException | ConfigurationException | IOException e) { }		
+		catch (ShadowException e ) {
+			errorList = reporter.getErrorList();
+			warningList = reporter.getWarningList();		
+			listErrors( warningList, inputIFile, IMarker.SEVERITY_WARNING, document);
+			listErrors( errorList, inputIFile, IMarker.SEVERITY_ERROR, document );
+		}
+		catch( ConfigurationException | IOException e) { 
+			
+		}		
+	}
+	
+	public static synchronized Type typeCheck(FileEditorInput newInput, IDocument document) {
+		
+		Path inputPath = newInput.getPath().toFile().toPath();
+		
+		try {			
+			ErrorReporter reporter = new ErrorReporter(Loggers.PARSER);
+		 	ParseChecker checker = new ParseChecker(reporter);		 	
+		 	checker.getCompilationUnit(document.get(), inputPath);
+		 	List<ShadowException> errorList = reporter.getErrorList();
+		 	
+		 	if( errorList.size() == 0 ) {
+				IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
+						.getPreferenceStore();
+				String configurationPath = preferenceStore.getString(PreferencePage.CONFIGURATION_PATH);
+				if( configurationPath == null || configurationPath.trim().isEmpty() )
+					configurationPath = System.getenv("SHADOW_HOME");
+				Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
+				
+				reporter = new ErrorReporter(Loggers.TYPE_CHECKER);								
+				Context node = TypeChecker.typeCheck(document.get(), inputPath, reporter);
+							
+				errorList = reporter.getErrorList();
+				if( errorList.size() == 0 )
+					return node.getType();
+		 	}
+		} 
+		catch (ShadowException | ConfigurationException | IOException e) {
+		}
+		
+		return null;
 	}
 		
 	private static void listErrors( List<ShadowException> errors, IFile file, int severity, IDocument document )  {

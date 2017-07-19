@@ -5,6 +5,8 @@
 
 package shadow.plugin.editor;
 
+import java.util.List;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import org.eclipse.jface.text.BadLocationException;
@@ -20,8 +22,12 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.FileEditorInput;
 
-import shadow.plugin.ShadowPlugin;
+import shadow.parse.ShadowParser.CompilationUnitContext;
+import shadow.parse.ShadowParser.ImportDeclarationContext;
 import shadow.plugin.compiler.ShadowCompilerInterface;
+import shadow.typecheck.Package;
+import shadow.typecheck.type.ArrayType;
+import shadow.typecheck.type.Type;
 
 public class ShadowSourceViewer extends ProjectionViewer {
 	
@@ -411,5 +417,68 @@ public class ShadowSourceViewer extends ProjectionViewer {
 			restoreSelection();
 		}
 	}
+	
+	
+	public void removeUnusedImports() {		
+		IDocument doc = this.getDocument();
+		DocumentRewriteSession rewriteSession = null;
+		
+		if (doc instanceof IDocumentExtension4) {
+			rewriteSession = 
+					((IDocumentExtension4) doc)
+					.startRewriteSession(DocumentRewriteSessionType.SEQUENTIAL);
+		}
 
+		try {
+			FileEditorInput input = (FileEditorInput)editor.getEditorInput();
+			CompilationUnitContext compilationUnit = ShadowCompilerInterface.getCompilationUnit(input, doc);
+			Type type = ShadowCompilerInterface.typeCheck(input, doc);
+			
+			//TODO: Version information is lost here (although the compiler currently doesn't use it)
+			
+			if( compilationUnit != null && type != null && compilationUnit.importDeclaration().size() > 0 ) {				
+				TreeSet<String> imports = new TreeSet<String>();
+							
+				//imported items come from import statements and fully qualified classes
+				for( Object importItem : type.getImportedItems() ) {
+					if( importItem instanceof Type ) {
+						Type importType = (Type)importItem;
+						if( !importType.hasOuter() && type.getUsedTypes().contains(importType) && !importType.getPackage().toString().equals("shadow:standard"))
+							imports.add(importType.toString(Type.PACKAGES));
+							
+					}
+					else if( importItem instanceof Package ) {
+						Package importPackage = (Package)importItem;
+						if( !importPackage.toString().equals("shadow:standard"))
+							for( Type referencedType : type.getUsedTypes() )
+								if( !referencedType.hasOuter() && !(referencedType instanceof ArrayType) &&  referencedType.getPackage().equals( importPackage ) && !referencedType.isPrimitive() )
+									imports.add(referencedType.toString(Type.PACKAGES));					
+					}
+				}
+				
+				StringBuilder builder = new StringBuilder();
+				String newline = System.lineSeparator();
+				
+				for( String importType : imports )			
+					builder.append("import " + importType + ";").append(newline);
+				
+				if( imports.size() > 0 )
+					builder.append(newline);
+								
+				int start = compilationUnit.importDeclaration().get(0).start.getStartIndex();
+				int stop = compilationUnit.modifiers().start.getStartIndex();
+				
+				doc.replace(start, stop - start, builder.toString() );
+			}			
+		}
+		catch (BadLocationException e) {			
+		}
+		finally {
+			if (doc instanceof IDocumentExtension4) {
+				((IDocumentExtension4) doc)
+				.stopRewriteSession(rewriteSession);
+			}
+			restoreSelection();
+		}
+	}
 }
