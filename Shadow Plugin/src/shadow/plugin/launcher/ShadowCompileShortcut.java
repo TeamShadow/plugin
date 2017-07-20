@@ -35,7 +35,7 @@ public class ShadowCompileShortcut implements ILaunchShortcut {
 		for( Object object : objects ) {				
 			if( object instanceof IFile ) {
 				IFile file = (IFile) object;
-				if( file.getFullPath().getFileExtension().toLowerCase().equals("shadow") ) {						
+				if( "shadow".equalsIgnoreCase(file.getFullPath().getFileExtension()) ) {						
 					IPath path = file.getLocation();
 					IProject project = file.getProject();
 					runCompiler(path, project);	

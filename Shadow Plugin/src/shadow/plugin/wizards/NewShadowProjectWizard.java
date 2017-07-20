@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.INewWizard;
@@ -65,7 +66,7 @@ public class NewShadowProjectWizard extends Wizard implements INewWizard {
 	}
 	
 	protected void createProject(final IProgressMonitor monitor) { 
-        monitor.beginTask("Creating Shadow project", 20); 
+        monitor.beginTask("Creating Shadow project", 30); 
         try { 
             final IWorkspaceRoot root = ResourcesPlugin.getWorkspace() 
                     .getRoot(); 
@@ -75,6 +76,18 @@ public class NewShadowProjectWizard extends Wizard implements INewWizard {
                     .newProjectDescription(project.getName());
             
             
+            if (!Platform.getLocation().equals(pageOne.getLocationPath())) 
+                description.setLocation(pageOne.getLocationPath()); 
+                        
+            project.create(description, monitor);
+            monitor.worked(10);
+            
+            monitor.subTask("Opening project");
+            project.open(monitor);
+            monitor.worked(10);             
+            
+            
+            monitor.subTask("Updating project nature"); 
             String[] natures = description.getNatureIds();
             String[] newNatures = new String[natures.length + 1];
             System.arraycopy(natures, 0, newNatures, 0, natures.length);
@@ -85,17 +98,15 @@ public class NewShadowProjectWizard extends Wizard implements INewWizard {
             IStatus status = workspace.validateNatureSet(newNatures);
 
             // only apply new nature, if the status is ok
-            if (status.getCode() == IStatus.OK)
-                description.setNatureIds(newNatures);            
+            if (status.getCode() == IStatus.OK) {                     
+	            description.setNatureIds(newNatures);
+	            project.setDescription(description, null);
+            }
             
-            if (!Platform.getLocation().equals(pageOne.getLocationPath())) 
-                description.setLocation(pageOne.getLocationPath()); 
-             
-            project.create(description, monitor); 
-            monitor.worked(10); 
-            project.open(monitor);
+            monitor.worked(10);
  
-        } catch (final CoreException e) { 
+        } catch (final CoreException e) {
+        	e.printStackTrace();
            
         } finally { 
             monitor.done(); 

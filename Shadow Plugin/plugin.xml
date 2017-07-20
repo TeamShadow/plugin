@@ -382,7 +382,7 @@
       </wizard>
    </extension>
    <extension
-         id="shadownature"
+         id="shadow.plugin.shadownature"
          name="Shadow nature"
          point="org.eclipse.core.resources.natures">
       <runtime>
@@ -390,6 +390,9 @@
                class="shadow.plugin.wizards.ShadowProjectNature">
          </run>
       </runtime>
+      <builder
+            id="shadow.plugin.builder">
+      </builder>
    </extension>
    <extension
          point="org.eclipse.ui.ide.projectNatureImages">
@@ -406,6 +409,12 @@
             icon="icons/shadow.png"
             id="shadow.plugin.perspective"
             name="Shadow">
+         <description>
+            Shadow development perspective
+         </description>
+         <description>
+            Shadow development perspectives
+         </description>
       </perspective>
    </extension>
    <extension
@@ -456,6 +465,16 @@
                id="org.eclipse.debug.ui.launchActionSet">
          </actionSet>
       </perspectiveExtension>
+   </extension>
+   <extension
+         id="shadow.plugin.builder"
+         name="Shadow Builder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="shadow.plugin.compiler.Builder">
+         </run></builder>
    </extension>
    <!--extension
          point="org.eclipse.ui.activities">

@@ -31,11 +31,11 @@ public class ShadowCompilePropertyTester extends PropertyTester {
 			
 			if( element instanceof FileEditorInput ) {
 				FileEditorInput fileInput = (FileEditorInput) element;			
-				return fileInput.getPath().getFileExtension().toLowerCase().equals("shadow");
+				return "shadow".equalsIgnoreCase(fileInput.getPath().getFileExtension());
 			}
 			else if( element instanceof IFile ) {
 				IFile file = (IFile) element;
-				return file.getFullPath().getFileExtension().toLowerCase().equals("shadow");
+				return "shadow".equalsIgnoreCase(file.getFullPath().getFileExtension());
 			}
 			//covers projects and folders
 			else if( element instanceof IContainer ) {
