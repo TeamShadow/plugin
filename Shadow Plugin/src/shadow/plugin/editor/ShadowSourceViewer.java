@@ -5,7 +5,6 @@
 
 package shadow.plugin.editor;
 
-import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -23,7 +22,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.FileEditorInput;
 
 import shadow.parse.ShadowParser.CompilationUnitContext;
-import shadow.parse.ShadowParser.ImportDeclarationContext;
 import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.typecheck.Package;
 import shadow.typecheck.type.ArrayType;
@@ -48,7 +46,7 @@ public class ShadowSourceViewer extends ProjectionViewer {
 					((IDocumentExtension4) doc)
 					.startRewriteSession(DocumentRewriteSessionType.SEQUENTIAL);
 		}
-
+			
 
 		Point selectedRange = getSelectedRange();
 		boolean emptySelection = 

@@ -225,8 +225,9 @@
             locationURI="popup:org.eclipse.ui.projectConfigure">
          <command
                commandId="shadow.plugin.nature.command"
-               style="push">
-	         <visibleWhen
+               style="push">	                
+         </command>
+         <visibleWhen
 	                  checkEnabled="false">
 	               <not>
 	               <adapt type="org.eclipse.core.resources.IProject">
@@ -234,8 +235,7 @@
                           value="shadow.plugin.shadownature" />
              		</adapt>	                  
 	               </not>
-	            </visibleWhen>         
-         </command>             
+	            </visibleWhen>               
       </menuContribution>
    </extension>
    <extension
@@ -395,4 +395,68 @@
             natureId="shadow.plugin.shadownature">
       </image>
    </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="shadow.plugin.ShadowPerspectiveFactory"
+            icon="icons/shadow.png"
+            id="shadow.plugin.perspective"
+            name="Shadow">
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="shadow.plugin.perspective">
+         <hiddenMenuItem
+               id="org.eclipse.jdt.ui.generate.javadoc">
+         </hiddenMenuItem>
+         <view
+               id="org.eclipse.ui.console.ConsoleView"
+               minimized="false"
+               relationship="stack"
+               visible="true">
+         </view>
+         <view
+               id="org.eclipse.ui.navigator.ProjectExplorer"
+               minimized="false"
+               relationship="stack"
+               visible="true">
+         </view>
+      </perspectiveExtension>
+   </extension>
+   <!--extension
+         point="org.eclipse.ui.activities">
+      <activity
+            id="shadow.plugin.activities.unwanted"
+            name="Unwanted Contributions">            
+      </activity>
+      <activityPatternBinding
+	        activityId="shadow.plugin.activities.unwanted"	        
+	        pattern="org\.eclipse\.debug\.ui\..*">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	        activityId="shadow.plugin.activities.unwanted"	        
+	        pattern="org\.eclipse\.jdt\.debug\.ui\..*">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	        activityId="shadow.plugin.activities.unwanted"	        
+	        pattern="org\.eclipse\.jdt\.ui\.navigate\.open.*">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	        activityId="shadow.plugin.activities.unwanted"	        
+	        pattern="org\.eclipse\.jdt\.ui\.generate\.javadoc.*">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	        activityId="shadow.plugin.activities.unwanted"	        
+	        pattern="org\.eclipse\.ui\.project\.buildAutomatically.*">
+	  </activityPatternBinding>
+	   <activityPatternBinding
+	        activityId="shadow.plugin.activities.unwanted"	        
+	        pattern="org\.eclipse\.jdt\.ui\.JavaElementCreationActionSet.*">
+	  </activityPatternBinding>
+	  
+	  
+
+	</extension-->
 </plugin>

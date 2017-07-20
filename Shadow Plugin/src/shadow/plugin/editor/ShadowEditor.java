@@ -32,11 +32,16 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IPropertyListener;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -45,6 +50,7 @@ import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
+import shadow.plugin.ShadowPerspectiveFactory;
 import shadow.plugin.ShadowPlugin;
 import shadow.plugin.compiler.ShadowCompilerInterface;
 import shadow.plugin.compiler.TypeCheckScheduler;
@@ -214,7 +220,7 @@ extends TextEditor
 	{
 		super.doRevertToSaved();
 		updateOutline();
-		updateErrors();
+		updateErrors();		
 	}
 	
 	private void scheduleParsing() {
@@ -274,7 +280,51 @@ extends TextEditor
 	protected void initializeEditor() {	
 		super.initializeEditor();       
 		setSourceViewerConfiguration(new ShadowSourceViewerConfiguration(this));
+		//setUnusedMenusVisible(false);
 	}
+	
+	/*
+	
+	private void setUnusedMenusVisible (boolean visible)
+	{
+	    IWorkbenchWindow workbenchWindow =  PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+	    WorkbenchWindow window = ((WorkbenchWindow)workbenchWindow);
+	        
+	    
+	    IContributionItem[] items = window.getMenuBarManager().getItems();
+	    for (IContributionItem item : items)
+	    {
+	    	if( item instanceof MenuManager ) {
+	    		MenuManager manager = (MenuManager) item;
+	    		Menu menu = manager.getMenu();
+	    		if( menu != null ) {
+		    		MenuItem[] menuItems = menu.getItems();
+		    		menu.setVisible(visible);
+		    		
+		    		
+	    		}
+	    		else
+	    			System.out.println("Pyost!");
+	    	}
+	    	
+	        //item.setVisible(visible);
+	    }
+	    
+	    ToolBarManager toolBar = (ToolBarManager) window.getToolBarManager(); 
+	    ToolItem[] toolItems = toolBar.getControl().getItems();
+	    
+	    
+//	    items = window.getCoolBarManager().getItems();
+	    for (ToolItem toolItem : toolItems)
+	    {
+	    	toolItem.setEnabled(false);
+	    }
+	    
+	    		
+	    //((WorkbenchWindow)workbenchWindow).getMenuBarManager().setVisible(visible);
+	}
+	
+	*/
 
 	@Override
 	protected ISourceViewer createSourceViewer(Composite parent, IVerticalRuler ruler, int styles) {
@@ -311,6 +361,111 @@ extends TextEditor
             document.addDocumentListener(documentListener);
         
         addPropertyListener(editorInputPropertyListener);
+        
+        
+     // Create an IPartListener2 
+        IPartListener2 pl = new IPartListener2() {
+        	
+        	
+        		String otherPerspective = null;
+        		
+        		private void changeToShadow() {
+        			IWorkbench wb = PlatformUI.getWorkbench();
+        			IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+        			IWorkbenchPage page = window.getActivePage();
+        			IPerspectiveDescriptor perspective = page.getPerspective();
+        			String ID = perspective.getId();
+        			
+        			if( !ShadowPerspectiveFactory.ID.equals(ID) ) {
+        				otherPerspective = ID;
+        				try {
+							wb.showPerspective("shadow.plugin.perspective", window);							
+						} catch (WorkbenchException e) {							
+						}      
+        			}        			
+        		}
+        		
+        		private void changeToOther() {
+        			IWorkbench wb = PlatformUI.getWorkbench();        			
+        			IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+        			IWorkbenchPage page = window.getActivePage();
+        			IPerspectiveDescriptor perspective = page.getPerspective();
+        			String ID = perspective.getId();
+        			
+        			if( ShadowPerspectiveFactory.ID.equals(ID) ) {
+        				if( otherPerspective == null )
+        					otherPerspective = wb.getPerspectiveRegistry().getDefaultPerspective();
+        				
+        				if( otherPerspective != null )        				
+	        				try {
+								wb.showPerspective(otherPerspective, window);							
+							} catch (WorkbenchException e) {							
+							}      
+        			}        			
+        		}
+        	
+                 public void partActivated(IWorkbenchPartReference partRef) {
+                      IWorkbenchPart part = partRef.getPart(true);
+                      if (part instanceof ShadowEditor)
+                    	  changeToShadow();
+                      else
+                    	  changeToOther();
+                 }
+
+				@Override
+				public void partBroughtToTop(IWorkbenchPartReference partRef) {
+					
+					
+				}
+
+				@Override
+				public void partClosed(IWorkbenchPartReference partRef) {
+					IWorkbenchPart part = partRef.getPart(true);
+                    if (part instanceof ShadowEditor)
+                  	  changeToOther();                    					
+				}
+
+				@Override
+				public void partDeactivated(IWorkbenchPartReference partRef) {
+					IWorkbenchPart part = partRef.getPart(true);
+                    if (part instanceof ShadowEditor)
+                  	  changeToOther(); 					
+				}
+
+				@Override
+				public void partOpened(IWorkbenchPartReference partRef) {
+					IWorkbenchPart part = partRef.getPart(true);
+                    if (part instanceof ShadowEditor)
+                  	  changeToShadow();
+                    else
+                  	  changeToOther();					
+				}
+
+				@Override
+				public void partHidden(IWorkbenchPartReference partRef) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void partVisible(IWorkbenchPartReference partRef) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void partInputChanged(IWorkbenchPartReference partRef) {
+					// TODO Auto-generated method stub
+					
+				}
+   
+            };
+
+        // Add the IPartListener2 to the page   
+        IWorkbenchPage page = this.getSite().getPage();
+        page.addPartListener(pl);
+
+        
         
         //initial typecheck
         //typeCheckScheduler.schedule();		
