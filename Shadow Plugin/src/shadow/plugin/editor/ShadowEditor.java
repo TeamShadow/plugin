@@ -192,7 +192,7 @@ extends TextEditor
 		@Override
 		public void partActivated(IWorkbenchPartReference partRef) {
 			IWorkbenchPart part = partRef.getPart(true);
-			if (part instanceof ShadowEditor)
+			if (part instanceof ShadowEditor )
 				changeToShadow();
 			else if( part instanceof EditorPart )
 				changeToOther();

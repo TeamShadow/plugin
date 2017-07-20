@@ -146,25 +146,37 @@ public class ShadowSourceViewer extends ProjectionViewer {
 			
 			previousLine--;
 		}
+		
+		boolean inComment = false;
 
 		for( int line = startLine; line <= endLine; line++ ) {
 			int offset = doc.getLineOffset(line);
 			int length = doc.getLineLength(line);
 			String lineText = doc.get(offset, length);
 			
-			if( !lineText.trim().isEmpty() ) {			
-				int braceChange = getBraceChange(lineText);
+			if( !lineText.trim().isEmpty() ) {		
+				boolean beginsMultilineComment = !inComment && beginsMultilineComment(lineText);
+				boolean endsMultilineComment = inComment && endsMultilineComment(lineText);
+				
 				StringBuffer buffer = new StringBuffer();
 				String afterTabs = getLineAfterTabs(lineText);
-				if( afterTabs.startsWith("}")) {
-					tabLevel--;
-					braceChange++;
+				
+				int braceChange = 0;
+				
+				if( !beginsMultilineComment && !inComment ) {
+					braceChange = getBraceChange(lineText);
+					if( afterTabs.startsWith("}")) {
+						tabLevel--;
+						braceChange++;
+					}
+					else if( afterTabs.startsWith("{") && lastIsOneLiner  )
+						tabLevel--;
 				}
-				else if( afterTabs.startsWith("{") && lastIsOneLiner  )
-					tabLevel--;
 				
 				for( int i = 0; i < tabLevel; ++i )
 					buffer.append('\t');
+				if( inComment )
+					buffer.append(' ');
 				buffer.append(afterTabs);
 				String newLine = buffer.toString();
 				if( !newLine.equals(lineText) )
@@ -178,19 +190,51 @@ public class ShadowSourceViewer extends ProjectionViewer {
 					tabLevel += lastIsOneLiner ? braceChange - 1 : braceChange;
 					lastIsOneLiner = false;
 				}
+				
+				if( inComment && endsMultilineComment )
+					inComment = false;
+				else if( beginsMultilineComment )
+					inComment = true;
 			}
 		}		
 	}
 	
+	private boolean beginsMultilineComment(String lineText) {
+		return lineText.matches(".*/\\*[^/]+[^(\\*/)]*");
+	}
+	
+	private boolean endsMultilineComment(String lineText) {
+		return lineText.matches(".*\\*/[^(/\\*)]*");
+	}
+	
+
 	// x coordinate is left braces and y coordinate is right braces
 	private int getBraceChange(String text) {
 		int braceChange = 0;
+		boolean inQuotes = false;
+		boolean inComment = false;
+		
 		for( int i = 0; i < text.length(); ) {
 		   final int codepoint = text.codePointAt(i);
-		   if( codepoint == '{' )
-				braceChange++;
-			else if( codepoint == '}' )
-				braceChange--;
+		   if( codepoint == '"' && !inComment )
+			   inQuotes = !inQuotes;		   
+		   else if( !inQuotes && !inComment ) {
+			   if( codepoint == '{' )
+					braceChange++;
+			   else if( codepoint == '}' )
+					braceChange--;
+			   else if( codepoint == '/' && i + 1 < text.length() && text.codePointAt(i + 1) == '*' ) {
+				   i += 1;
+				   inComment = true;
+			   }
+			   else if( codepoint == '/' && i < text.length() && text.codePointAt(i) == '/' )
+				   return braceChange;
+		   }
+		   else if( inComment && codepoint == '*' && i + 1 < text.length() && text.codePointAt(i + 1) == '/'  ) {
+			   i += 1;
+			   inComment = false;
+		   }			   
+		   
 		   i += Character.charCount(codepoint);
 		}
 		return braceChange;

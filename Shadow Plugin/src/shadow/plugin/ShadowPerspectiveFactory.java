@@ -8,6 +8,9 @@ public class ShadowPerspectiveFactory implements IPerspectiveFactory {
 	public static final String ID = "shadow.plugin.perspective";
 
 	@Override
-	public void createInitialLayout(IPageLayout layout) {}
+	public void createInitialLayout(IPageLayout layout) {
+		layout.addNewWizardShortcut("shadow.plugin.newProjectWizard");
+        layout.addNewWizardShortcut("shadow.plugin.newFileWizard");
+	}
 
 }

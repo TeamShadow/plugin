@@ -9,7 +9,23 @@
             extensions="shadow,meta">
       </participant>
    </extension>
-   
+   <extension
+         point="org.eclipse.ui.contexts">
+      <context
+            id="shadow.plugin.editor.context"
+            name="Editing Shadow Source" 
+            parentId="org.eclipse.ui.textEditorScope" 
+            description="Editing Shadow source"/>
+      <context
+            id="shadow.plugin.perspective.context"
+            name="Working in Shadow Perspective" 
+            parentId="org.eclipse.ui.contexts.window" 
+            description="Working in Shadow Perspective"/>
+      <context
+            id="shadow.plugin.wizard.context"
+            name="Working in Shadow Perspective or Editing Shadow Source"
+            description="Working in Shadow Perspective or editing Shadow source"/>
+   </extension>
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -229,15 +245,20 @@
                style="push">
             <visibleWhen
                   checkEnabled="false">
-               <not>
-                  <adapt
-                        type="org.eclipse.core.resources.IProject">
-                     <test
-                           property="org.eclipse.core.resources.projectNature"
-                           value="shadow.plugin.shadownature">
-                     </test>
-                  </adapt>
-               </not>
+                  <with variable="selection">
+                  <count value="1"/>
+                  <iterate ifEmpty="false">                  
+	                   <adapt type="org.eclipse.core.resources.IResource">                  
+	               		<not>
+		                     <test
+		                           forcePluginActivation="true"
+		                           property="org.eclipse.core.resources.projectNature"
+		                           value="shadow.plugin.shadownature">
+		                     </test>                  
+	               		</not>
+	               		</adapt>
+               </iterate>
+               </with>
             </visibleWhen>	                
          </command>
       </menuContribution>
@@ -361,6 +382,7 @@
             canFinishEarly="false"
             category="shadow.plugin.wizards"
             class="shadow.plugin.wizards.NewShadowProjectWizard"
+            finalPerspective="shadow.plugin.perspective"
             icon="icons/shadow.png"
             id="shadow.plugin.newProjectWizard"
             name="Shadow Project"
@@ -379,7 +401,7 @@
          <description>
             Create a Shadow file
          </description>
-      </wizard>
+      </wizard>  
    </extension>
    <extension
          id="shadow.plugin.shadownature"
@@ -411,10 +433,7 @@
             name="Shadow">
          <description>
             Shadow development perspective
-         </description>
-         <description>
-            Shadow development perspectives
-         </description>
+         </description>         
       </perspective>
    </extension>
    <extension
@@ -463,7 +482,7 @@
          </view>
          <actionSet
                id="org.eclipse.debug.ui.launchActionSet">
-         </actionSet>
+         </actionSet>        
       </perspectiveExtension>
    </extension>
    <extension
@@ -476,38 +495,38 @@
                class="shadow.plugin.compiler.Builder">
          </run></builder>
    </extension>
-   <!--extension
-         point="org.eclipse.ui.activities">
-      <activity
-            id="shadow.plugin.activities.unwanted"
-            name="Unwanted Contributions">            
-      </activity>
-      <activityPatternBinding
-	        activityId="shadow.plugin.activities.unwanted"	        
-	        pattern="org\.eclipse\.debug\.ui\..*">
-	  </activityPatternBinding>
-	  <activityPatternBinding
-	        activityId="shadow.plugin.activities.unwanted"	        
-	        pattern="org\.eclipse\.jdt\.debug\.ui\..*">
-	  </activityPatternBinding>
-	  <activityPatternBinding
-	        activityId="shadow.plugin.activities.unwanted"	        
-	        pattern="org\.eclipse\.jdt\.ui\.navigate\.open.*">
-	  </activityPatternBinding>
-	  <activityPatternBinding
-	        activityId="shadow.plugin.activities.unwanted"	        
-	        pattern="org\.eclipse\.jdt\.ui\.generate\.javadoc.*">
-	  </activityPatternBinding>
-	  <activityPatternBinding
-	        activityId="shadow.plugin.activities.unwanted"	        
-	        pattern="org\.eclipse\.ui\.project\.buildAutomatically.*">
-	  </activityPatternBinding>
-	   <activityPatternBinding
-	        activityId="shadow.plugin.activities.unwanted"	        
-	        pattern="org\.eclipse\.jdt\.ui\.JavaElementCreationActionSet.*">
-	  </activityPatternBinding>
-	  
-	  
-
-	</extension-->
+   <extension
+         point="org.eclipse.ui.navigator.navigatorContent">
+      <commonWizard
+            type="new"
+            wizardId="shadow.plugin.newProjectWizard">
+            <enablement>            	
+	            <with variable="activeWorkbenchWindow.activePerspective">
+	                    <equals value="shadow.plugin.perspective" />
+	        	</with>	        	
+        	</enablement>                
+      </commonWizard>
+      <commonWizard
+            type="new"
+            wizardId="shadow.plugin.newFileWizard">
+         <enablement>
+         	<or>
+	         	<with variable="selection">
+		            <count value="1"/>
+		            <iterate>
+		                <adapt type="org.eclipse.core.resources.IResource">
+		                    <test
+                            forcePluginActivation="true"
+                            property="org.eclipse.core.resources.projectNature"
+                            value="shadow.plugin.shadownature"/>
+		                </adapt> 
+		            </iterate>
+	        	</with>         	
+	            <with variable="activeWorkbenchWindow.activePerspective">
+	                    <equals value="shadow.plugin.perspective" />
+	        	</with>
+	        </or>        	
+        </enablement>         
+      </commonWizard>       
+   </extension>   
 </plugin>
