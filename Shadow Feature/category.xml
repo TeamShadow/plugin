@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <bundle id="shadow.plugin" version="0.7.1">
+   <bundle id="shadow.plugin" version="0.7.5">
       <category name="Shadow Plug-in for Eclipse"/>
    </bundle>
    <category-def name="Shadow Plug-in for Eclipse" label="Shadow Plug-in for Eclipse">
