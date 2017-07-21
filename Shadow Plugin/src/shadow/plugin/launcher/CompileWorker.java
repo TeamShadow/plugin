@@ -33,7 +33,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		this.path = path;
 		this.console = Console.getConsole("Shadow Build", false);
 		this.pathToCompiler = pathToCompiler;
-		this.arguments = new ArrayList<String>();
+		this.arguments = new ArrayList<String>();		
 		
 		//turn whitespace delimited list (which might contain quoted phrases) into a list of strings
 		Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(arguments);

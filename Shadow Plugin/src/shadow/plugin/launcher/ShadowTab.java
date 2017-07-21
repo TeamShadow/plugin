@@ -1,7 +1,5 @@
 package shadow.plugin.launcher;
 
-import java.nio.file.Files;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;

@@ -6,6 +6,12 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunchConfigurationType;
+import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
+import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.ui.ILaunchShortcut;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.TreeSelection;
@@ -63,7 +69,23 @@ public class ShadowCompileShortcut implements ILaunchShortcut {
 	}
 	
 	public void runCompiler(IPath path, IProject project) {
-		if( path != null )
-			new CompileWorker(path.makeAbsolute(), ShadowLaunchConfigurationDelegate.getDefaultCompiler(), "", true, project).execute();
+		if( path != null ) {
+			try {
+				ILaunchManager mgr = DebugPlugin.getDefault().getLaunchManager();
+				ILaunchConfigurationType lct = mgr.getLaunchConfigurationType("shadow.plugin.launcher.launchConfigurationType");
+				ILaunchConfigurationWorkingCopy configuration = lct.newInstance(project, "Shadow Compile Shortcut Configuration");
+
+				configuration.setAttribute(ShadowLaunchConfigurationAttributes.MAIN_FILE, path.makeAbsolute().toString());
+				configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILE_ONLY, true);
+				configuration.setAttribute(ShadowLaunchConfigurationAttributes.COMPILER, "");
+				configuration.setAttribute(ShadowLaunchConfigurationAttributes.ARGUMENTS, "");  
+
+				ShadowLaunchConfigurationDelegate launcher = new ShadowLaunchConfigurationDelegate();
+
+				launcher.launch(configuration, ILaunchManager.RUN_MODE, new Launch(configuration, ILaunchManager.RUN_MODE, null), new NullProgressMonitor());
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
+		}	
 	}
 }
