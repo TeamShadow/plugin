@@ -7,10 +7,13 @@ import java.util.ResourceBundle;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension3;
+import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.text.Position;
@@ -28,19 +31,35 @@ import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IPerspectiveDescriptor;
+import org.eclipse.ui.IPropertyListener;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchPartReference;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.editors.text.TextEditor;
+import org.eclipse.ui.part.EditorPart;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
+import shadow.plugin.ShadowPerspectiveFactory;
 import shadow.plugin.ShadowPlugin;
+import shadow.plugin.compiler.ShadowCompilerInterface;
+import shadow.plugin.compiler.TypeCheckScheduler;
 import shadow.plugin.outline.ShadowOutline;
 
 public class ShadowEditor
 extends TextEditor
-{
+{	
 	private class DefineFoldingRegionAction extends TextEditorAction {
 
 		public DefineFoldingRegionAction(ResourceBundle bundle, String prefix, ITextEditor editor) {
@@ -53,7 +72,7 @@ extends TextEditor
 
 		@Override
 		public void run() {
-			ITextEditor editor= getTextEditor();
+			ITextEditor editor= getTextEditor();			
 			ISelection selection= editor.getSelectionProvider().getSelection();
 			if (selection instanceof ITextSelection) {
 				ITextSelection textSelection= (ITextSelection) selection;
@@ -79,11 +98,149 @@ extends TextEditor
 		}
 	}
 
+	private class DocumentListener implements IDocumentListener {
+		private IDocument document;
+
+		public DocumentListener(IDocument document) {
+			this.document = document;
+		}
+
+		public void documentAboutToBeChanged(DocumentEvent event) {	            
+		}
+		public void documentChanged(DocumentEvent event) {
+			synchronized (ShadowEditor.this) {
+				scheduleParsing();
+			}
+		}
+
+		public IDocument getDocument() {
+			return document;
+		}
+
+
+		public void setDocument(IDocument document) {
+			this.document = document;
+		}
+	}
+
+	private DocumentListener documentListener;
+
+	private IPropertyListener editorInputPropertyListener = 
+			new IPropertyListener() {
+		public void propertyChanged(Object source, int propId) {
+			if (source == ShadowEditor.this && 
+					propId == IEditorPart.PROP_INPUT && documentListener != null) {
+				IDocument oldDoc =
+						documentListener.getDocument();
+				IDocument newDoc = 
+						getDocumentProvider()
+						.getDocument(getEditorInput()); 
+				if( newDoc != oldDoc ) {
+					// Need to unwatch the old document 
+					// and watch the new document
+					if( oldDoc != null )
+						oldDoc.removeDocumentListener(documentListener);
+
+
+					documentListener.setDocument(newDoc);
+
+					newDoc.addDocumentListener(
+							documentListener);
+				}
+
+				scheduleParsing();
+			}
+		}
+	};
+
+
+	private static class EditorListener implements IPartListener2 {
+
+		String otherPerspective = null;
+
+		private void changeToShadow() {
+			IWorkbench wb = PlatformUI.getWorkbench();
+			IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+			IWorkbenchPage page = window.getActivePage();
+			IPerspectiveDescriptor perspective = page.getPerspective();
+			String ID = perspective.getId();
+
+			if( !ShadowPerspectiveFactory.ID.equals(ID) ) {
+				otherPerspective = ID;
+				try {
+					wb.showPerspective(ShadowPerspectiveFactory.ID, window);							
+				} catch (WorkbenchException e) {							
+				}      
+			}        			
+		}
+
+		private void changeToOther() {
+			IWorkbench wb = PlatformUI.getWorkbench();        			
+			IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+			IWorkbenchPage page = window.getActivePage();
+			IPerspectiveDescriptor perspective = page.getPerspective();
+			String ID = perspective.getId();
+
+			if( ShadowPerspectiveFactory.ID.equals(ID) && otherPerspective != null ) {				        				
+				try {
+					wb.showPerspective(otherPerspective, window);							
+				} catch (WorkbenchException e) {							
+				}      
+			}        			
+		}
+
+		@Override
+		public void partActivated(IWorkbenchPartReference partRef) {
+			IWorkbenchPart part = partRef.getPart(true);
+			if (part instanceof ShadowEditor )
+				changeToShadow();
+			else if( part instanceof EditorPart )
+				changeToOther();
+		}
+
+		@Override
+		public void partBroughtToTop(IWorkbenchPartReference partRef) {}
+
+		@Override
+		public void partClosed(IWorkbenchPartReference partRef) {}
+
+		@Override
+		public void partDeactivated(IWorkbenchPartReference partRef) {}
+
+		@Override
+		public void partOpened(IWorkbenchPartReference partRef) {}
+
+		@Override
+		public void partHidden(IWorkbenchPartReference partRef) {}
+
+		@Override
+		public void partVisible(IWorkbenchPartReference partRef) {}
+
+		@Override
+		public void partInputChanged(IWorkbenchPartReference partRef) {}
+	}
+
+	private static final int TYPECHECK_SCHEDULE_DELAY = 500;
 
 	private ShadowOutline outline;	
 	private ProjectionSupport projectionSupport;
 	private ProjectionAnnotationModel annotationModel;
-		
+	private TypeCheckScheduler typeCheckScheduler;
+
+	public static IEditorPart getActiveEditor() {
+		IWorkbench wb = PlatformUI.getWorkbench();
+		IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
+
+		if(window != null) {
+			IWorkbenchPage page = window.getActivePage();			
+			if(page != null)
+				return page.getActiveEditor();
+		}
+
+		return null;
+	}
+
+
 	@Override
 	protected void createActions() {
 		super.createActions();
@@ -91,17 +248,38 @@ extends TextEditor
 		IAction a= new DefineFoldingRegionAction(ShadowEditorMessages.getResourceBundle(), "DefineFoldingRegion.", this);
 		setAction("DefineFoldingRegion", a);
 	}
-	
-	private void updateErrors() {		
-		ShadowPlugin.getDefault().getCompilerInterface().compile((FileEditorInput)getEditorInput());		
+
+	private void updateErrors() {
+		//run updates in another thread for better responsiveness
+		new Thread() {
+			@Override
+			public void run() {
+				ShadowCompilerInterface.reportTypeCheckErrors((FileEditorInput)getEditorInput(), getDocumentProvider().getDocument(getEditorInput()));
+			}
+		}.start();
+	}
+
+
+	public void updateOutline() {
+		if (outline != null)
+			outline.update();		
 	}
 
 	@Override
 	public void dispose()
 	{
-		if (this.outline != null) {
-			this.outline.update();
+		outline.dispose();
+		if (typeCheckScheduler!=null) {
+			typeCheckScheduler.cancel(); // avoid unnecessary work after the editor is asked to close down
+			typeCheckScheduler = null;
 		}
+
+		IDocument document = getSourceViewer().getDocument();
+		if( document != null ) 
+			document.removeDocumentListener(documentListener);
+
+		removePropertyListener(editorInputPropertyListener);
+
 		super.dispose();
 	}
 
@@ -109,62 +287,51 @@ extends TextEditor
 	public void doRevertToSaved()
 	{
 		super.doRevertToSaved();
-		if (this.outline != null) {
-			this.outline.update();
+		updateOutline();
+		updateErrors();		
+	}
+
+	private void scheduleParsing() {
+		if( typeCheckScheduler != null ) {
+			typeCheckScheduler.cancel();            
+			typeCheckScheduler.schedule(TYPECHECK_SCHEDULE_DELAY);
 		}
-		
-		updateErrors();
 	}
 
 
 	@Override
-	public void doSave(IProgressMonitor monitor)
-	{
+	public void doSave(IProgressMonitor monitor) {
 		super.doSave(monitor);
 		if (this.outline != null) {
-			this.outline.setSelection(null);
-			this.outline.update();
+			this.outline.setSelection(null);			
 		}
-		
+		updateOutline();
 		updateErrors();
 	}
 
 
 	@Override
-	public void doSaveAs()
-	{
+	public void doSaveAs() {
 		super.doSaveAs();
-		if (this.outline != null) {
-			this.outline.update();
-		}
-		
+		updateOutline();
 		updateErrors();
 	}
 
 	@Override
 	public void doSetInput(IEditorInput input)
-			throws CoreException
-	{
+			throws CoreException {
 		super.doSetInput(input);
-		if (this.outline != null) {
-			this.outline.update();
-		}
-		
+		updateOutline();
 		updateErrors();
 	}
 
 
-	@SuppressWarnings("rawtypes")
-	public Object getAdapter(Class required)
-	{
-		if (IContentOutlinePage.class.equals(required))
-		{
-			/*super.createAnnotationAccess();// change
-    	super.*/
-
-			if (this.outline == null) {
-				this.outline = new ShadowOutline(this);
-			}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public Object getAdapter(Class required) {
+		if (IContentOutlinePage.class.equals(required)) {			
+			if (this.outline == null)
+				this.outline = new ShadowOutline(this);			
 			return this.outline;
 		}
 
@@ -181,7 +348,51 @@ extends TextEditor
 	protected void initializeEditor() {	
 		super.initializeEditor();       
 		setSourceViewerConfiguration(new ShadowSourceViewerConfiguration(this));
+		//setUnusedMenusVisible(false);
 	}
+
+	/*
+
+	private void setUnusedMenusVisible (boolean visible)
+	{
+	    IWorkbenchWindow workbenchWindow =  PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+	    WorkbenchWindow window = ((WorkbenchWindow)workbenchWindow);
+
+
+	    IContributionItem[] items = window.getMenuBarManager().getItems();
+	    for (IContributionItem item : items)
+	    {
+	    	if( item instanceof MenuManager ) {
+	    		MenuManager manager = (MenuManager) item;
+	    		Menu menu = manager.getMenu();
+	    		if( menu != null ) {
+		    		MenuItem[] menuItems = menu.getItems();
+		    		menu.setVisible(visible);
+
+
+	    		}
+	    		else
+	    			System.out.println("Pyost!");
+	    	}
+
+	        //item.setVisible(visible);
+	    }
+
+	    ToolBarManager toolBar = (ToolBarManager) window.getToolBarManager(); 
+	    ToolItem[] toolItems = toolBar.getControl().getItems();
+
+
+//	    items = window.getCoolBarManager().getItems();
+	    for (ToolItem toolItem : toolItems)
+	    {
+	    	toolItem.setEnabled(false);
+	    }
+
+
+	    //((WorkbenchWindow)workbenchWindow).getMenuBarManager().setVisible(visible);
+	}
+
+	 */
 
 	@Override
 	protected ISourceViewer createSourceViewer(Composite parent, IVerticalRuler ruler, int styles) {
@@ -189,7 +400,7 @@ extends TextEditor
 		fAnnotationAccess= createAnnotationAccess();
 		fOverviewRuler= createOverviewRuler(getSharedColors());
 
-		ISourceViewer viewer= new ProjectionViewer(parent, ruler, getOverviewRuler(), isOverviewRulerVisible(), styles);
+		ISourceViewer viewer = new ShadowSourceViewer(parent, ruler, getOverviewRuler(), isOverviewRulerVisible(), styles, this);
 		// ensure decoration support has been created and configured.
 		getSourceViewerDecorationSupport(viewer);
 
@@ -199,37 +410,61 @@ extends TextEditor
 	@Override
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
+
+		typeCheckScheduler = new TypeCheckScheduler(this);
+
 		ProjectionViewer viewer= (ProjectionViewer) getSourceViewer();
 		projectionSupport= new ProjectionSupport(viewer, getAnnotationAccess(), getSharedColors());
 		projectionSupport.addSummarizableAnnotationType("org.eclipse.ui.workbench.texteditor.error"); //$NON-NLS-1$
 		projectionSupport.addSummarizableAnnotationType("org.eclipse.ui.workbench.texteditor.warning"); //$NON-NLS-1$
 		projectionSupport.install();
 		viewer.doOperation(ProjectionViewer.TOGGLE);
-		
+
 		annotationModel = viewer.getProjectionAnnotationModel();
+
+		IDocument document = getSourceViewer().getDocument();
+		documentListener =  new DocumentListener(document);
+
+		if( document!=null )
+			document.addDocumentListener(documentListener);
+
+		addPropertyListener(editorInputPropertyListener);
+
+		// Add the IPartListener2 to listen to the page   
+		IWorkbenchPage page = this.getSite().getPage();
+		page.addPartListener(new EditorListener());
+
+
+		//initial typecheck
+		//typeCheckScheduler.schedule();		
 	}
-	
+
 	private Annotation[] oldAnnotations;	
 	public void updateFoldingStructure(ArrayList<Position> positions)
 	{
-	   Annotation[] annotations = new Annotation[positions.size()];
+		Annotation[] annotations = new Annotation[positions.size()];
 
-	   //this will hold the new annotations along
-	   //with their corresponding positions
-	   HashMap<ProjectionAnnotation, Position > newAnnotations = new HashMap<ProjectionAnnotation, Position>();
+		//this will hold the new annotations along
+		//with their corresponding positions
+		HashMap<ProjectionAnnotation, Position > newAnnotations = new HashMap<ProjectionAnnotation, Position>();
 
-	   for(int i = 0; i < positions.size();i++)
-	   {
-	      ProjectionAnnotation annotation = new ProjectionAnnotation();
+		for(int i = 0; i < positions.size();i++)
+		{
+			ProjectionAnnotation annotation = new ProjectionAnnotation();
 
-	      newAnnotations.put(annotation, positions.get(i));
+			newAnnotations.put(annotation, positions.get(i));
 
-	      annotations[i] = annotation;
-	   }
+			annotations[i] = annotation;
+		}
 
-	   annotationModel.modifyAnnotations(oldAnnotations, newAnnotations,null);
+		annotationModel.modifyAnnotations(oldAnnotations, newAnnotations,null);
 
-	   oldAnnotations = annotations;
+		oldAnnotations = annotations;
+	}
+
+
+	public ShadowSourceViewer getShadowSourceViewer() {
+		return (ShadowSourceViewer)getSourceViewer();
 	}
 
 	@Override
@@ -240,23 +475,33 @@ extends TextEditor
 			extension.exposeModelRange(new Region(offset, length));
 		}
 	}
-	
+
+
+	public final static String SOURCE_MENU_ID = ShadowPlugin.PLUGIN_ID + ".menu.sourceMenu";	
+
 	public final static String EDITOR_MATCHING_BRACKETS = "matchingBrackets";
 	public final static String EDITOR_MATCHING_BRACKETS_COLOR= "matchingBracketsColor";
 
 	@Override
 	protected void configureSourceViewerDecorationSupport (SourceViewerDecorationSupport support) {
-	    super.configureSourceViewerDecorationSupport(support);      
+		super.configureSourceViewerDecorationSupport(support);      
 
-	    char[] matchChars = {'(', ')', '[', ']', '{', '}'}; //which brackets to match     
-	    ICharacterPairMatcher matcher = new DefaultCharacterPairMatcher(matchChars ,
-	            IDocumentExtension3.DEFAULT_PARTITIONING, true);
-	    support.setCharacterPairMatcher(matcher);
-	    support.setMatchingCharacterPainterPreferenceKeys(EDITOR_MATCHING_BRACKETS,EDITOR_MATCHING_BRACKETS_COLOR);
+		char[] matchChars = {'(', ')', '[', ']', '{', '}'}; //which brackets to match     
+		ICharacterPairMatcher matcher = new DefaultCharacterPairMatcher(matchChars ,
+				IDocumentExtension3.DEFAULT_PARTITIONING, true);
+		support.setCharacterPairMatcher(matcher);
+		support.setMatchingCharacterPainterPreferenceKeys(EDITOR_MATCHING_BRACKETS,EDITOR_MATCHING_BRACKETS_COLOR);
 
-	    //Enable bracket highlighting in the preference store
-	    IPreferenceStore store = getPreferenceStore();
-	    store.setDefault(EDITOR_MATCHING_BRACKETS, true);
-	    store.setDefault(EDITOR_MATCHING_BRACKETS_COLOR, "192,192,192");
+		//Enable bracket highlighting in the preference store
+		IPreferenceStore store = getPreferenceStore();
+		store.setDefault(EDITOR_MATCHING_BRACKETS, true);
+		store.setDefault(EDITOR_MATCHING_BRACKETS_COLOR, "192,192,192");
 	}
+
+	@Override
+	protected void editorContextMenuAboutToShow(IMenuManager menu) {
+		super.editorContextMenuAboutToShow(menu);        
+		menu.remove(ITextEditorActionConstants.SHIFT_LEFT);
+		menu.remove(ITextEditorActionConstants.SHIFT_RIGHT); 
+	}	
 }

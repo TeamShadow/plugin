@@ -14,8 +14,6 @@ import org.eclipse.swt.graphics.Image;
 import org.osgi.framework.Bundle;
 
 import shadow.plugin.ShadowPlugin;
-import shadow.plugin.compiler.ShadowCompilerInterface;
-import shadow.plugin.compiler.ShadowCompilerInterface.Tree;
 
 public class ShadowLabelProvider
 extends LabelProvider
@@ -60,9 +58,9 @@ implements IStyledLabelProvider
 				((element instanceof ShadowOutlineError))) {
 			return new StyledString(String.valueOf(element));
 		}
-		else if( element instanceof ShadowCompilerInterface.Tree )
+		else if( element instanceof Tree )
 		{
-			ShadowCompilerInterface.Tree tree = (Tree) element;
+			Tree tree = (Tree) element;
 			return tree.toStyledString();			
 		}
 		else
@@ -86,5 +84,10 @@ implements IStyledLabelProvider
 	public void dispose()
 	{
 		super.dispose();
+		
+		for( Image image : images.values() )
+			image.dispose();
+		
+		images.clear();		
 	}
 }

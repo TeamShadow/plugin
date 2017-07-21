@@ -1,6 +1,5 @@
 package shadow.plugin.editor;
 
-import org.eclipse.jface.text.DefaultIndentLineAutoEditStrategy;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextDoubleClickStrategy;
@@ -26,6 +25,10 @@ public class ShadowSourceViewerConfiguration
 		this.editor = editor;
 	}
 	
+	public ShadowEditor getEditor() {
+		return editor;
+	}
+	
   public int getTabWidth(ISourceViewer sourceViewer)
   {
     return 4;
@@ -44,7 +47,8 @@ public class ShadowSourceViewerConfiguration
   @Override
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
 		//IAutoEditStrategy strategy= (IDocument.DEFAULT_CONTENT_TYPE.equals(contentType) ? new ShadowAutoIndentStrategy() : new DefaultIndentLineAutoEditStrategy());
-	  IAutoEditStrategy strategy= new DefaultIndentLineAutoEditStrategy();
+	  //IAutoEditStrategy strategy= new DefaultIndentLineAutoEditStrategy();
+	  IAutoEditStrategy strategy= new ShadowAutoIndentStrategy();
 		return new IAutoEditStrategy[] { strategy };
 	}
 	

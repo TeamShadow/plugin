@@ -9,7 +9,23 @@
             extensions="shadow,meta">
       </participant>
    </extension>
-   
+   <extension
+         point="org.eclipse.ui.contexts">
+      <context
+            id="shadow.plugin.editor.context"
+            name="Editing Shadow Source" 
+            parentId="org.eclipse.ui.textEditorScope" 
+            description="Editing Shadow source"/>
+      <context
+            id="shadow.plugin.perspective.context"
+            name="Working in Shadow Perspective" 
+            parentId="org.eclipse.ui.contexts.window" 
+            description="Working in Shadow Perspective"/>
+      <context
+            id="shadow.plugin.wizard.context"
+            name="Working in Shadow Perspective or Editing Shadow Source"
+            description="Working in Shadow Perspective or editing Shadow source"/>
+   </extension>
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -21,12 +37,12 @@
             id="shadow.plugin.editor.ShadowEditor">
       </editor>
       <editor
-            name="Shadow Editor"
+            name="Meta File Editor"
             extensions="meta"
             icon="icons/meta_file.gif"
             contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
             class="shadow.plugin.editor.ShadowEditor"
-            id="shadow.plugin.editor.ShadowEditor">
+            id="shadow.plugin.editor.MetaEditor">
       </editor>
    </extension>
    <extension
@@ -44,130 +60,132 @@
             name="Shadow">
       </page>
    </extension>
+   
    <extension
-   		point = "org.eclipse.ui.console.consoleFactories">
-   		<consoleFactory
-   			class = "shadow.plugin.launcher.ConsoleFactory"
-   			icon = "icons/shadow.png"
-   			label = "Shadow Build"
-   			>
-   		</consoleFactory>
-   	</extension>
-   
-   
-   
-   
-   <extension 
-   		point = "org.eclipse.debug.core.launchConfigurationTypes">
-   		<launchConfigurationType
-   				id = "org.shadow-language.launchConfigurationType"
-   				name = "Shadow Application"   				
-   				delegate = "shadow.plugin.launcher.ShadowLauncher"
-   				modes = "run">
-   		</launchConfigurationType>
-   </extension>
-   
-   
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+         <launchConfigurationType
+	        name="Shadow Launch"
+	        delegate="shadow.plugin.launcher.ShadowLaunchConfigurationDelegate"
+	        modes="run"
+	        id="shadow.plugin.launcher.launchConfigurationType">
+	    </launchConfigurationType>
+   </extension>   
+  
    <extension
    		point = "org.eclipse.debug.ui.launchConfigurationTabGroups">
    		<launchConfigurationTabGroup
-   			id = "org.shadow-language.basicLaunchTabGroup"
-   			type = "org.shadow-language.launchConfigurationType"
-   			class = "shadow.plugin.launcher.ShadowTabGroup"> <!--was ShadowLaunchTabGroup -->
+   			id = "shadow.plugin.launcher.launchConfigurationTabGroup"
+   			type = "shadow.plugin.launcher.launchConfigurationType"
+   			class = "shadow.plugin.launcher.ShadowTabGroup">
    		</launchConfigurationTabGroup>
    	</extension>
+  
+  	<extension
+        point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+	    <launchConfigurationTypeImage
+	            id="shadow.plugin.launcher.launchconfigurationtypeimage"
+	            configTypeID="shadow.plugin.launcher.launchConfigurationType"
+	            icon="icons/shadow.png">
+	    </launchConfigurationTypeImage>
+	</extension>
    
-   <!--
+    <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            properties="canLaunchAsShadow"
+            namespace="shadow.plugin.launcher"
+            type="org.eclipse.core.runtime.IAdaptable"
+            class="shadow.plugin.launcher.ShadowLaunchPropertyTester"
+            id="shadow.plugin.launcher.ShadowLaunchPropertyTester">
+      </propertyTester>
+      <propertyTester
+            properties="canCompileAsShadow"
+            namespace="shadow.plugin.launcher"
+            type="org.eclipse.core.runtime.IAdaptable"
+            class="shadow.plugin.launcher.ShadowCompilePropertyTester"
+            id="shadow.plugin.launcher.ShadowCompilePropertyTester">
+      </propertyTester>
+   </extension>
+   
    <extension
-   		point = "org.eclipse.debug.ui.launchConfigurationTypeImages">
-   		<launchConfigurationTypeImage
-   			id = ""
-   			configTypeID = ""
-   			icon = "">
-   		</launchConfigurationTypeImage>
-   	</extension>
-   -->
-   
-   <!--
-   <extension 
-   		point = "org.eclipse.debug.core.launchDelegates">
-   			<launchDelegate
-   				id = "org.shadow-language.launchProfileDelegate"
-   				delegate = "shadow.plugin.launcher.ShadowLauncher">
-   			</launchDelegate>
-   			
-   			<modeCombination
-   				modes = "run"
-   				perspective = "">
-   			</modeCombination>
-   			
-   	</extension>
-   -->
-   
-   
+     point="org.eclipse.core.expressions.definitions">
+	  <definition
+	        id="shadow.plugin.launcher.testLaunch">
+	     <adapt
+	           type="org.eclipse.core.runtime.IAdaptable">
+	        <test
+	              property="shadow.plugin.launcher.canLaunchAsShadow"
+	              value="true" 
+      			  forcePluginActivation="true">
+	        </test>
+	     </adapt>
+	  </definition>
+	  <definition
+	        id="shadow.plugin.launcher.testCompile">
+	     <adapt
+	           type="org.eclipse.core.runtime.IAdaptable">
+	        <test
+	              property="shadow.plugin.launcher.canCompileAsShadow"
+	              value="true" 
+      			  forcePluginActivation="true">
+	        </test>
+	     </adapt>
+	  </definition>  
+  </extension>
    
    <extension
 	    point="org.eclipse.debug.ui.launchShortcuts">
 	    <shortcut
 	        class="shadow.plugin.launcher.ShadowLaunchShortcut"
 	        icon="icons/shadow.png"
-	        id="org.shadow-language.shadowShortCut"
-	        label="Shadow Shortcut"
-	        modes="run">
+	        id="shadow.plugin.shadowShortCut"
+	        label="Shadow Application"
+	        modes="run"
+	        description="Run Shadow program, compiling first if main source file has been updated more recently than executable.">
 	        <contextualLaunch>
 	            <enablement>
-	                <with
-	                    variable="selection">
-	                    <count
-	                        value="+">
-	                    </count>
+	                <with variable="selection">
+	                    <count value="1"/>
+	                    <iterate>	                  
+		                    <reference
+		                          definitionId="shadow.plugin.launcher.testLaunch">
+		                    </reference>
+                 		</iterate>
 	                </with>
 	            </enablement>
 	        </contextualLaunch>
 	    </shortcut>
-	</extension>
+	    <shortcut
+	        class="shadow.plugin.launcher.ShadowCompileShortcut"
+	        icon="icons/shadow.png"
+	        id="shadow.plugin.shadowShortCut"
+	        label="Shadow Compile Only"
+	        modes="run"
+	        description="Compile Shadow program but do not run, forcing compilation even if main source file has been updated more recently than executable.">
+	        <contextualLaunch>
+	            <enablement>
+	                <with variable="selection">	                    
+	                     <iterate>	                  
+		                    <reference
+		                          definitionId="shadow.plugin.launcher.testCompile">
+		                    </reference>
+                 		</iterate>
+	                </with>
+	            </enablement>
+	        </contextualLaunch>
+	    </shortcut>
+	</extension>   
    
-   
-   
-   <!--
-   <extension point="org.eclipse.debug.ui.launchShortcuts">
-   		<shortcut
-   				class = "org.eclipse.jdt.internal.debug.ui.launcher.JavaApplicationLaunchShortcut"
-   				description = ""
-   				helpContextId = "org.eclipse.jdt.debug.ui.shortcut_local_java_application"
-   				icon = "$nl$/icons/full/etool16/java_app.gif"
-   				id = "org.eclipse.jdt.debug.ui.localJavaShortcut"
-   				label = "%JavaApplicationShortcut.label"
-   				modes = "run">
-   			<contextualLaunch>
-   				<enablement>
-   					<with variable = "selection">
-   						<count value = "1"/>
-   						 <iterate>
-   						  <and>
-   						   <adapt type = "org.eclipse.jdt.core.IJavaElement">
-   						   		<test property = "org.eclipse.jdt.core.isInJavaProject"/>
-   						   	</adapt>
-   						   	<or>
-   						   		<test property="org.eclipse.jdt.launching.hasMain"/>
-   						   	</or>
-   						   </and>
-   						  </iterate>
-   					</with>
-   				</enablement>
-   			</contextualLaunch>   			
-   			<configurationType
-   				id = "org.shadow-language.launchConfigurationType">
-   			</configurationType>	
-   			<description
-   				description = "Compiles and runs shadow programs."
-   				mode = "run">
-   			</description>
-   		</shortcut>
+    <extension
+         point="org.eclipse.ui.console.consolePageParticipants">
+      <consolePageParticipant
+            class="shadow.plugin.launcher.ConsoleActions"
+            id="shadow.plugin.launcher.PageParticipant">
+         <enablement>
+            <instanceof value="shadow.plugin.launcher.Console"/>
+         </enablement>
+      </consolePageParticipant>
    </extension>
-   -->
-   
-      
       
    <extension 
    		id="problemmarker"
@@ -179,9 +197,336 @@
    		<attribute name="location" />
    	</extension>
    <extension
-         point="org.eclipse.debug.core.launchConfigurationTypes">
+         point="org.eclipse.ui.menus">
+      <menuContribution            
+            locationURI="menu:org.eclipse.ui.main.menu?after=edit">
+         <menu
+               id="shadow.plugin.editor.menu.source"
+               label="&amp;Source">
+                <visibleWhen>             
+				  <with
+				     variable="activePart">
+				     <instanceof
+				          value="shadow.plugin.editor.ShadowEditor">
+				     </instanceof>
+				  </with>
+			  </visibleWhen>       
+            <dynamic id="source"
+                  class="shadow.plugin.editor.SourceMenuItems"/>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.eclipse.ui.popup.any?after=group.edit">
+         <menu 
+	         id="shadow.plugin.editor.menu.popup.source"
+	         label="&amp;Source">
+	         <visibleWhen>             
+				  <with
+				     variable="activePart">
+				     <instanceof
+				          value="shadow.plugin.editor.ShadowEditor">
+				     </instanceof>
+				  </with>
+			  </visibleWhen>          
+	         <dynamic
+	               class="shadow.plugin.editor.SourceMenuItems"
+	               id="source">  
+	                
+	         </dynamic>
+	      </menu>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.eclipse.ui.projectConfigure">
+         <command
+               commandId="shadow.plugin.nature.command"
+               icon="icons/shadow.png"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+                  <with variable="selection">
+                  <count value="1"/>
+                  <iterate ifEmpty="false">                  
+	                   <adapt type="org.eclipse.core.resources.IResource">                  
+	               		<not>
+		                     <test
+		                           forcePluginActivation="true"
+		                           property="org.eclipse.core.resources.projectNature"
+		                           value="shadow.plugin.shadownature">
+		                     </test>                  
+	               		</not>
+	               		</adapt>
+               </iterate>
+               </with>
+            </visibleWhen>	                
+         </command>
+      </menuContribution>
    </extension>
    <extension
-         point="org.eclipse.debug.core.launchModes">
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="shadow.plugin.commands.RemovedUnusedImportsHandler"
+            description="Removes unused imports from the list of imports"
+            id="shadow.plugin.commands.removeUnusedImports"
+            name="Remove Unused Imports">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.ToggleCommentHandler"
+            description="Comments/uncomments the current selection or the current source line"
+            id="shadow.plugin.commands.toggleComment"
+            name="Toggle Comment">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.AddBlockCommentHandler"
+            description="Comments the current selection"
+            id="shadow.plugin.commands.addBlockComment"
+            name="Add Block Comment">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.CorrectIndentationHandler"
+            description="Corrects indentation within the current selection"
+            id="shadow.plugin.commands.correctIndentation"
+            name="Correct Indentation">
+      </command>
+      <command
+      		defaultHandler="shadow.plugin.commands.RemoveBlockCommentHandler"
+            description="Uncomments the current selection"
+            id="shadow.plugin.commands.removeBlockComment"
+            name="Convert to Shadow Project">
+      </command>
+      <command
+            defaultHandler="shadow.plugin.commands.GenerateElementCommentHandler"
+            description="Generates comment for the current element"
+            id="shadow.plugin.commands.generateElementComment"
+            name="Generate Element Comment">
+      </command>
+      <command
+      		defaultHandler="shadow.plugin.wizards.ShadowProjectNatureHandler"
+            description="Converts project to Shadow project"
+            id="shadow.plugin.nature.command"
+            name="Convert to Shadow Project">
+      </command>
    </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+     <sequenceModifier
+        find="M2+M3" replace="M1+M3" 
+        platforms="cocoa,carbon"/>
+      <scheme
+            id="shadow.plugin.scheme"
+            name="Shadow Plug-in Scheme"
+            parentId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </scheme>         
+         
+      <key
+            commandId="shadow.plugin.commands.correctIndentation"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="shadow.plugin.scheme"
+            sequence="M1+I">
+      </key>
+       <key
+            commandId="shadow.plugin.commands.toggleComment"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="shadow.plugin.scheme"
+            sequence="M1+/">
+      </key>
+       <key
+            commandId="shadow.plugin.commands.addBlockComment"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="shadow.plugin.scheme"
+            sequence="M1+M2+/">
+      </key>
+      <key
+            commandId="shadow.plugin.commands.removeBlockComment"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="shadow.plugin.scheme"
+            sequence="M1+M2+\">
+      </key>
+      <key
+            commandId="shadow.plugin.commands.generateElementComment"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="shadow.plugin.scheme"
+            sequence="M2+M3+J">
+      </key>
+      <key
+            commandId="org.eclipse.ui.window.showKeyAssist"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="shadow.plugin.scheme"
+            sequence="M1+M2+L">
+      </key>      
+   </extension>
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="org.eclipse.ui.ide.workbench"
+            name="Shadow Eclipse Plug-in">
+         <property
+               name="appName"
+               value="Shadow Eclipse Plug-in">
+         </property>
+         <property
+               name="preferenceCustomization"
+               value="plugin_customization.ini">
+         </property>
+      </product>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="shadow.plugin.wizards"
+            name="Shadow">
+      </category>
+      <wizard
+            canFinishEarly="false"
+            category="shadow.plugin.wizards"
+            class="shadow.plugin.wizards.NewShadowProjectWizard"
+            finalPerspective="shadow.plugin.perspective"
+            icon="icons/shadow.png"
+            id="shadow.plugin.newProjectWizard"
+            name="Shadow Project"
+            project="true">
+         <description>
+            Create a Shadow project
+         </description>
+      </wizard>
+      <wizard
+            canFinishEarly="false"
+            category="shadow.plugin.wizards"
+            class="shadow.plugin.wizards.NewShadowFileWizard"
+            icon="icons/shadow_file.gif"
+            id="shadow.plugin.newFileWizard"
+            name="Shadow File">
+         <description>
+            Create a Shadow file
+         </description>
+      </wizard>  
+   </extension>
+   <extension
+         id="shadow.plugin.shadownature"
+         name="Shadow nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="shadow.plugin.wizards.ShadowProjectNature">
+         </run>
+      </runtime>
+      <builder
+            id="shadow.plugin.builder">
+      </builder>
+   </extension>
+   <extension
+         point="org.eclipse.ui.ide.projectNatureImages">
+      <image
+            icon="icons/shadow_project.gif"
+            id="shadow.plugin.shadownature.image"
+            natureId="shadow.plugin.shadownature">
+      </image>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="shadow.plugin.ShadowPerspectiveFactory"
+            icon="icons/shadow.png"
+            id="shadow.plugin.perspective"
+            name="Shadow">
+         <description>
+            Shadow development perspective
+         </description>         
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="shadow.plugin.perspective">
+         <hiddenMenuItem
+               id="org.eclipse.jdt.ui.generate.javadoc">
+         </hiddenMenuItem>
+         <view
+               id="org.eclipse.ui.navigator.ProjectExplorer"
+               minimized="false"
+               ratio="0.15"
+               relationship="left"
+               relative="org.eclipse.ui.editorss"
+               visible="true">
+         </view>
+         <view
+               id="org.eclipse.ui.views.ProblemView"
+               minimized="false"
+               ratio="0.65"
+               relationship="bottom"
+               relative="org.eclipse.ui.editorss"
+               visible="true">
+         </view>
+         <view
+               id="org.eclipse.ui.console.ConsoleView"
+               minimized="false"
+               relationship="stack"
+               relative="org.eclipse.ui.views.ProblemView"
+               visible="true">
+         </view>
+         <view
+               id="org.eclipse.ui.views.ContentOutline"
+               minimized="false"
+               ratio="0.85"
+               relationship="right"
+               relative="org.eclipse.ui.editorss"
+               visible="true">
+         </view>
+         <view
+               id="org.eclipse.search.ui.views.SearchView"
+               minimized="false"
+               relationship="stack"
+               relative="org.eclipse.ui.views.ProblemView">
+         </view>
+         <actionSet
+               id="org.eclipse.debug.ui.launchActionSet">
+         </actionSet>        
+      </perspectiveExtension>
+   </extension>
+   <extension
+         id="shadow.plugin.builder"
+         name="Shadow Builder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="shadow.plugin.compiler.Builder">
+         </run></builder>
+   </extension>
+   <extension
+         point="org.eclipse.ui.navigator.navigatorContent">
+      <commonWizard
+            type="new"
+            wizardId="shadow.plugin.newProjectWizard">
+            <enablement>            	
+	            <with variable="activeWorkbenchWindow.activePerspective">
+	                    <equals value="shadow.plugin.perspective" />
+	        	</with>	        	
+        	</enablement>                
+      </commonWizard>
+      <commonWizard
+            type="new"
+            wizardId="shadow.plugin.newFileWizard">
+         <enablement>
+         	<or>
+	         	<with variable="selection">
+		            <count value="1"/>
+		            <iterate>
+		                <adapt type="org.eclipse.core.resources.IResource">
+		                    <test
+                            forcePluginActivation="true"
+                            property="org.eclipse.core.resources.projectNature"
+                            value="shadow.plugin.shadownature"/>
+		                </adapt> 
+		            </iterate>
+	        	</with>         	
+	            <with variable="activeWorkbenchWindow.activePerspective">
+	                    <equals value="shadow.plugin.perspective" />
+	        	</with>
+	        </or>        	
+        </enablement>         
+      </commonWizard>       
+   </extension>   
 </plugin>
