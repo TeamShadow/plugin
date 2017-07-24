@@ -42,10 +42,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		String executableName = null;
 		boolean outputFlag = false;
 		while( m.find() ) {
-			String argument = m.group(1);			
-			if( !Main.IS_WINDOWS )
-				argument = argument.replace("\"", "");
-
+			String argument = m.group(1).replace("\"", "");			
 			this.arguments.add(argument);
 
 			if( outputFlag )
@@ -66,7 +63,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 				executable =  path.removeLastSegments(1).append(executableName);
 		}
 		else {
-			if( Main.IS_WINDOWS )		
+			if( System.getProperty("os.name").toLowerCase().contains("windows") )		
 				executable = path.removeFileExtension().addFileExtension("exe");		
 			else						
 				executable = path.removeFileExtension();
@@ -96,8 +93,8 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		{}
 
 		ArrayList<String> inputArgs = new ArrayList<String>();
-		inputArgs.add(Main.quoteString(pathToCompiler));		
-		inputArgs.add(Main.quoteString(pathName));
+		inputArgs.add(pathToCompiler);		
+		inputArgs.add(pathName);
 		inputArgs.addAll(arguments);		
 
 		int value = runProcess(inputArgs, console);
@@ -124,7 +121,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		try {
 			if(!compileOnly && get() == 0) {
 				ArrayList<String> inputArgs = new ArrayList<String>();
-				String executableName = Main.quoteString(executable.toString()); 
+				String executableName = executable.toString(); 
 				inputArgs.add(executableName);				
 
 				Console programConsole = Console.getConsole(executableName);
