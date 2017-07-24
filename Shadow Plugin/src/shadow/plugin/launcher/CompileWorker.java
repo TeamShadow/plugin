@@ -19,8 +19,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 
+import shadow.Main;
+
 public class CompileWorker extends SwingWorker<Integer, Void> {
-	
+
 	private IPath path;
 	private Console console;	
 	private boolean compileOnly;
@@ -28,32 +30,35 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	private String pathToCompiler;
 	private List<String> arguments;
 	private IProject project;	 
-	
+
 	public CompileWorker(IPath path, String pathToCompiler, String arguments, boolean compileOnly, IProject project) {
 		this.path = path;
 		this.console = Console.getConsole("Shadow Build", false);
 		this.pathToCompiler = pathToCompiler;
-		this.arguments = new ArrayList<String>();		
-		
+		this.arguments = new ArrayList<String>();	
+
 		//turn whitespace delimited list (which might contain quoted phrases) into a list of strings
 		Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(arguments);
 		String executableName = null;
 		boolean outputFlag = false;
 		while( m.find() ) {
-			String argument = m.group(1).replace("\"", "");			
-		    this.arguments.add(argument);
-		    
-		    if( outputFlag )
-		    	executableName = argument;
-		    
-		    if( argument.equals("-o") || argument.equals("--output") )
-		    	outputFlag = true;
-		    else
-		    	outputFlag = false;
+			String argument = m.group(1);			
+			if( !Main.IS_WINDOWS )
+				argument = argument.replace("\"", "");
+
+			this.arguments.add(argument);
+
+			if( outputFlag )
+				executableName = argument;
+
+			if( argument.equals("-o") || argument.equals("--output") )
+				outputFlag = true;
+			else
+				outputFlag = false;
 		}
 		this.compileOnly = compileOnly;
 		this.project = project;
-		
+
 		if( executableName != null ) {			
 			if( Paths.get(executableName).isAbsolute() )			
 				executable = new org.eclipse.core.runtime.Path(executableName);
@@ -61,8 +66,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 				executable =  path.removeLastSegments(1).append(executableName);
 		}
 		else {
-			String osName = System.getProperty("os.name").toLowerCase();
-			if( osName.contains("windows") )			
+			if( Main.IS_WINDOWS )		
 				executable = path.removeFileExtension().addFileExtension("exe");		
 			else						
 				executable = path.removeFileExtension();
@@ -73,16 +77,16 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 	protected Integer doInBackground() throws Exception {				
 		String pathName = path.toString();
 		Path pathFile = Paths.get(pathName);			
-		
+
 		Path executableFile = Paths.get(executable.toString());
-		
+
 		// if we're running after compilation
 		// and executable is newer than changes to file, there's no need to recompile
 		// (unless some other file has changed, which we are not worrying about yet)
 		if( !compileOnly && Files.exists(pathFile) && Files.exists(executableFile) &&
-			Files.getLastModifiedTime(pathFile).compareTo(Files.getLastModifiedTime(executableFile)) <= 0 )
+				Files.getLastModifiedTime(pathFile).compareTo(Files.getLastModifiedTime(executableFile)) <= 0 )
 			return 0;
-					
+
 		IOConsoleOutputStream stream = console.getOutput();
 		try {
 			stream.write("Compiling " + pathName + "\n");
@@ -92,15 +96,15 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		{}
 
 		ArrayList<String> inputArgs = new ArrayList<String>();
-		inputArgs.add(pathToCompiler);		
-		inputArgs.add(pathName);
+		inputArgs.add(Main.quoteString(pathToCompiler));		
+		inputArgs.add(Main.quoteString(pathName));
 		inputArgs.addAll(arguments);		
-		
+
 		int value = runProcess(inputArgs, console);
-		
+
 		if( project != null )
-		    project.refreshLocal(IResource.DEPTH_INFINITE, null);		
-		
+			project.refreshLocal(IResource.DEPTH_INFINITE, null);		
+
 		try {
 			if( value == 0 )			
 				stream.write("Compilation of " + pathName + " succeeded.\n");
@@ -110,27 +114,27 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		}
 		catch (IOException e) 
 		{}
-		
+
 		return value;
 	}
-	
+
 	@Override
-    public void done() {		
+	public void done() {		
 		console.markTerminated();		
 		try {
 			if(!compileOnly && get() == 0) {
 				ArrayList<String> inputArgs = new ArrayList<String>();
-				String executableName = executable.toString(); 
+				String executableName = Main.quoteString(executable.toString()); 
 				inputArgs.add(executableName);				
-						
+
 				Console programConsole = Console.getConsole(executableName);
-				
+
 				new SwingWorker<Integer, Void>() {
 					@Override
 					protected Integer doInBackground() throws Exception {
 						return runProcess(inputArgs, programConsole);
 					}
-					
+
 					@Override
 					public void done() {
 						programConsole.markTerminated();
@@ -140,8 +144,8 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 		}
 		catch (InterruptedException | ExecutionException e) 
 		{}
-    }	
-	
+	}	
+
 	public static int runProcess(ArrayList<String> inputArgs, Console console) {
 		// execute the command		
 		Process process = null;
@@ -154,7 +158,7 @@ public class CompileWorker extends SwingWorker<Integer, Void> {
 			new Pipe( process.getErrorStream(), console.getError() ).start();	
 			if( console.getInput() !=  null )
 				new Pipe( console.getInput(), process.getOutputStream() ).start();
-			
+
 			return process.waitFor();			
 		} 
 		catch (IOException | InterruptedException e) {
