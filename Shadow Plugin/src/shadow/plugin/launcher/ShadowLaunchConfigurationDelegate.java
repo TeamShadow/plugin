@@ -42,13 +42,7 @@ public class ShadowLaunchConfigurationDelegate extends LaunchConfigurationDelega
 	}
 
 	public static String getDefaultCompiler() {
-		String pathToCompiler = System.getenv("SHADOW_HOME");    	
-		String compiler = "shadowc";			
-
-		if( pathToCompiler != null && !pathToCompiler.trim().isEmpty())				
-			compiler = Paths.get(pathToCompiler, compiler).toString();    	
-
-		return compiler;
+		return "shadowc";
 	}
 
 	public static IProject getProject() {

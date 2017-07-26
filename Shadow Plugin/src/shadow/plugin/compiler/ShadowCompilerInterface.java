@@ -2,6 +2,7 @@ package shadow.plugin.compiler;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,8 +126,11 @@ public class ShadowCompilerInterface {
 				IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
 						.getPreferenceStore();
 				String configurationPath = preferenceStore.getString(PreferencePage.CONFIGURATION_PATH);
-				if( configurationPath == null || configurationPath.trim().isEmpty() )
-					configurationPath = System.getenv("SHADOW_HOME");
+				if( configurationPath == null || configurationPath.trim().isEmpty() ) {
+					String home = System.getenv("SHADOW_HOME");
+					if( home != null && !home.trim().isEmpty() )					
+						configurationPath = Main.canonicalize(Paths.get(home, "shadow.xml"));
+				}
 				Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
 				
 				reporter = new ErrorReporter(Loggers.TYPE_CHECKER);								
@@ -165,8 +169,11 @@ public class ShadowCompilerInterface {
 				IPreferenceStore preferenceStore = ShadowPlugin.getDefault()
 						.getPreferenceStore();
 				String configurationPath = preferenceStore.getString(PreferencePage.CONFIGURATION_PATH);
-				if( configurationPath == null || configurationPath.trim().isEmpty() )
-					configurationPath = System.getenv("SHADOW_HOME");
+				if( configurationPath == null || configurationPath.trim().isEmpty() ) {
+					String home = System.getenv("SHADOW_HOME");
+					if( home != null && !home.trim().isEmpty() )					
+						configurationPath = Main.canonicalize(Paths.get(home, "shadow.xml")); 
+				}
 				Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
 				
 				reporter = new ErrorReporter(Loggers.TYPE_CHECKER);								
