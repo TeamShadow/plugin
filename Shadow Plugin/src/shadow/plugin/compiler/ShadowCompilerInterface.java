@@ -128,7 +128,7 @@ public class ShadowCompilerInterface {
 				String configurationPath = preferenceStore.getString(PreferencePage.CONFIGURATION_PATH);
 				if( configurationPath == null || configurationPath.trim().isEmpty() ) {
 					String home = System.getenv("SHADOW_HOME");
-					if( home != null && home.trim().isEmpty() )					
+					if( home != null && !home.trim().isEmpty() )					
 						configurationPath = Main.canonicalize(Paths.get(home, "shadow.xml"));
 				}
 				Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
@@ -171,7 +171,7 @@ public class ShadowCompilerInterface {
 				String configurationPath = preferenceStore.getString(PreferencePage.CONFIGURATION_PATH);
 				if( configurationPath == null || configurationPath.trim().isEmpty() ) {
 					String home = System.getenv("SHADOW_HOME");
-					if( home != null && home.trim().isEmpty() )					
+					if( home != null && !home.trim().isEmpty() )					
 						configurationPath = Main.canonicalize(Paths.get(home, "shadow.xml")); 
 				}
 				Configuration.buildConfiguration(inputPath.toString(), configurationPath, true);
